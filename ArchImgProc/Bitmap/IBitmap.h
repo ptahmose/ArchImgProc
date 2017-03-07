@@ -76,7 +76,7 @@ namespace ArchImgProc
 		return CBitmapData<CHeapAllocator>::Create(pixeltype, width, height, pitch, extraRows, extraColumns);
 	}*/
 
-	//std::shared_ptr<IBitmapData> LoadBitmap(const wchar_t* szwFilename);
+	std::shared_ptr<IBitmapData> LoadBitmapFromFile(const wchar_t* szwFilename);
 
 	//void SaveBitmap(std::shared_ptr<IBitmapData> bitmap, const wchar_t* szwFilename);
 
@@ -89,3 +89,4 @@ namespace ArchImgProc
 #include "allocator.h"
 
 #include "Factory.h"
+#include "BitmapLoader.h"

@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineSegmenterTest", "LineSegmenterTest\LineSegmenterTest.vcxproj", "{557A2571-C6DD-4D58-80F3-D2600818F4D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ArchImgProc", "ArchImgProc", "{A392B2C9-6F2A-4422-8B3A-30C88FA965E1}"
+	ProjectSection(SolutionItems) = preProject
+		ArchImgProc\archimgproc.h = ArchImgProc\archimgproc.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bitmap", "Bitmap", "{EFB096F1-A6C2-4F03-9F75-14C1EA2AF7A7}"
+	ProjectSection(SolutionItems) = preProject
+		ArchImgProc\Bitmap\allocator.h = ArchImgProc\Bitmap\allocator.h
+		ArchImgProc\Bitmap\Bitmap.h = ArchImgProc\Bitmap\Bitmap.h
+		ArchImgProc\Bitmap\BitmapData.h = ArchImgProc\Bitmap\BitmapData.h
+		ArchImgProc\Bitmap\BitmapLoader.h = ArchImgProc\Bitmap\BitmapLoader.h
+		ArchImgProc\Bitmap\datastore.h = ArchImgProc\Bitmap\datastore.h
+		ArchImgProc\Bitmap\Factory.h = ArchImgProc\Bitmap\Factory.h
+		ArchImgProc\Bitmap\IBitmap.h = ArchImgProc\Bitmap\IBitmap.h
+		ArchImgProc\Bitmap\readerwriterlocker.h = ArchImgProc\Bitmap\readerwriterlocker.h
+		ArchImgProc\Bitmap\utils.h = ArchImgProc\Bitmap\utils.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lsd", "Lsd", "{A12B9B5B-3076-45A9-81DC-AC4E6A6CCC64}"
+	ProjectSection(SolutionItems) = preProject
+		ArchImgProc\Lsd\Lsd.h = ArchImgProc\Lsd\Lsd.h
+		ArchImgProc\Lsd\LsdImp.h = ArchImgProc\Lsd\LsdImp.h
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Debug|x64.ActiveCfg = Debug|x64
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Debug|x64.Build.0 = Debug|x64
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Debug|x86.ActiveCfg = Debug|Win32
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Debug|x86.Build.0 = Debug|Win32
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Release|x64.ActiveCfg = Release|x64
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Release|x64.Build.0 = Release|x64
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Release|x86.ActiveCfg = Release|Win32
+		{557A2571-C6DD-4D58-80F3-D2600818F4D9}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EFB096F1-A6C2-4F03-9F75-14C1EA2AF7A7} = {A392B2C9-6F2A-4422-8B3A-30C88FA965E1}
+		{A12B9B5B-3076-45A9-81DC-AC4E6A6CCC64} = {A392B2C9-6F2A-4422-8B3A-30C88FA965E1}
+	EndGlobalSection
+EndGlobal

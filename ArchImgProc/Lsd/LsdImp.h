@@ -1,3 +1,18 @@
+/*----------------------------------------------------------------------------
+This program is free software : you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.If not, see <http://www.gnu.org/licenses/>.
+----------------------------------------------------------------------------*/
+
 #pragma once
 
 #include <exception>
@@ -79,6 +94,7 @@ namespace ArchImgProc
 
 			typedef BitVector UsedStore;
 		private:
+			/// Base class for implementing a sampler.
 			class SamplerBase
 			{
 			protected:
@@ -92,6 +108,7 @@ namespace ArchImgProc
 				int YSize() const { return this->height; }
 			};
 
+			/// Sampler which operates on float-bitmaps.
 			template <typename tFlt>
 			class SamplerFloat :public SamplerBase
 			{
@@ -327,11 +344,11 @@ namespace ArchImgProc
 			};
 
 		private:
-			static calcFLT Constants_PI() { return (calcFLT)3.14159265358979323846; }
-			static calcFLT Constants_2PI() { return (calcFLT)(2 * 3.14159265358979323846); }
-			static calcFLT Constants_3_2_PI() { return (calcFLT)(3 * 3.14159265358979323846 / 2); }
-			static calcFLT Constants_Log10_Of_11() { return (calcFLT)1.04139268515822504075020; /*log10 (11) */ }
-			static calcFLT Constants_LN10() { return (calcFLT)2.30258509299404568402; }
+			static constexpr calcFLT Constants_PI() { return (calcFLT)3.14159265358979323846; }
+			static constexpr calcFLT Constants_2PI() { return (calcFLT)(2 * 3.14159265358979323846); }
+			static constexpr calcFLT Constants_3_2_PI() { return (calcFLT)(3 * 3.14159265358979323846 / 2); }
+			static constexpr calcFLT Constants_Log10_Of_11() { return (calcFLT)1.04139268515822504075020; /*log10 (11) */ }
+			static constexpr calcFLT Constants_LN10() { return (calcFLT)2.30258509299404568402; }
 
 			static calcFLT pow6(calcFLT x) { calcFLT v = x*x*x; return v*v; }
 			static calcFLT pow5(calcFLT x) { calcFLT v = x*x; return v*v*x; }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../Bitmap/IBitmap.h"
+
 namespace ArchImgProc
 {
 	template <typename tFloat>
@@ -24,6 +26,7 @@ namespace ArchImgProc
 
 	class LineSegmentDetection
 	{
+	public:
 		static std::vector<LSDLineSegment> DoLSD(ArchImgProc::IBitmapData* bm, float scaleX = 1, float scaleY = 1)
 		{
 			float scales[2] = { scaleX,scaleY };
