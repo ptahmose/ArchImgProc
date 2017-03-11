@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bitmap", "Bitmap", "{EFB096
 		ArchImgProc\Bitmap\Bitmap.h = ArchImgProc\Bitmap\Bitmap.h
 		ArchImgProc\Bitmap\BitmapData.h = ArchImgProc\Bitmap\BitmapData.h
 		ArchImgProc\Bitmap\BitmapLoader.h = ArchImgProc\Bitmap\BitmapLoader.h
+		ArchImgProc\Bitmap\BitmapSave.h = ArchImgProc\Bitmap\BitmapSave.h
 		ArchImgProc\Bitmap\datastore.h = ArchImgProc\Bitmap\datastore.h
 		ArchImgProc\Bitmap\Factory.h = ArchImgProc\Bitmap\Factory.h
 		ArchImgProc\Bitmap\IBitmap.h = ArchImgProc\Bitmap\IBitmap.h

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <functional>
 
 namespace ArchImgProc
 {
@@ -35,6 +36,26 @@ namespace ArchImgProc
 		static std::uint32_t CalcDefaultPitch(ArchImgProc::PixelType pixeltype, int width, std::uint8_t multipleOf = 4)
 		{
 			return ((Utils::GetBytesPerPel(pixeltype)*width + (multipleOf - 1)) / multipleOf) * multipleOf;
+		}
+
+		static void ThrowIfFailed(const char* function, HRESULT hr)
+		{
+			if (FAILED(hr))
+			{
+				char errorMsg[255];
+				_snprintf_s(errorMsg, _TRUNCATE, "COM-ERROR hr=0x%08X (%s)", hr, function);
+				throw std::runtime_error(errorMsg);
+			}
+		}
+
+		static void ThrowIfFailed(const char* function, HRESULT hr, std::function<bool(HRESULT)> checkFunc)
+		{
+			if (checkFunc(hr) != true)
+			{
+				char errorMsg[255];
+				_snprintf_s(errorMsg, _TRUNCATE, "COM-ERROR hr=0x%08X (%s)", hr, function);
+				throw std::runtime_error(errorMsg);
+			}
 		}
 	};
 
