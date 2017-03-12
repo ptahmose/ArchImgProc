@@ -13,7 +13,9 @@ public:
 	static void WriteLineSegmentsAsSvg(std::function<bool(tFlt& x1, tFlt& y1, tFlt& x2, tFlt& y2, tFlt* ptrstrokeWidth, std::string& color)> getLine, int xsize, int ysize, ostream& ost)
 	{
 		if (xsize <= 0 || ysize <= 0)
+		{
 			throw std::logic_error("Error: invalid image size in write_svg.");
+		}
 
 		ost << "<?xml version=\"1.0\" standalone=\"no\"?>" << std::endl;
 		ost << "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"" << std::endl;
@@ -37,6 +39,13 @@ public:
 		}
 
 		ost << "</svg>" << std::endl;
+	}
+
+	template<typename tFlt>
+	static void WriteLineSegmentsAsSvg(std::function<bool(tFlt& x1, tFlt& y1, tFlt& x2, tFlt& y2, tFlt* ptrstrokeWidth, std::string& color)> getNextLine, int xsize, int ysize, const wchar_t* szwFilename)
+	{
+		std::ofstream ofile(szwFilename, ios::out);
+		WriteLineSegmentsAsSvg<tFlt>(getNextLine, xsize, ysize, ofile);
 	}
 
 	template<typename ForwardIterator>
@@ -73,7 +82,7 @@ public:
 		return std::make_pair((int)std::ceil(xmax - xmin), (int)std::ceil(ymax - ymin));
 	}
 
-	template<typename tFlt,typename ForwardIterator>
+	template<typename tFlt, typename ForwardIterator>
 	static void WriteLineSegmentsAsSvg(ForwardIterator begin, ForwardIterator end, const wchar_t* szwFilename)
 	{
 		std::ofstream ofile(szwFilename, ios::out);
@@ -126,49 +135,4 @@ public:
 			ofile);
 
 	}
-
-	//template<typename ForwardIterator>
-	//static void WriteLineSegmentsAsSvg(ForwardIterator begin, ForwardIterator end, int xsize, int ysize, const wchar_t* filename)
-	//{
-	//	double width = 2;
-	//	FILE* svg;
-	//	int i;
-
-	//	/* check input */
-	//	/*if (segs == NULL || n < 0 || dim <= 0)
-	//	throw std::logic_error("Error: invalid line segment list in write_svg.");*/
-	//	if (xsize <= 0 || ysize <= 0)
-	//		throw std::logic_error("Error: invalid image size in write_svg.");
-
-	//	/* open file */
-	//	if (wcscmp(filename, L"-") == 0) svg = stdout;
-	//	else svg = _wfopen(filename, L"w");
-	//	if (svg == NULL) throw std::logic_error("Error: unable to open SVG output file.");
-
-	//	/* write SVG header */
-	//	fprintf(svg, "<?xml version=\"1.0\" standalone=\"no\"?>\n");
-	//	fprintf(svg, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"\n");
-	//	fprintf(svg, " \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
-	//	fprintf(svg, "<svg width=\"%dpx\" height=\"%dpx\" ", xsize, ysize);
-	//	fprintf(svg, "version=\"1.1\"\n xmlns=\"http://www.w3.org/2000/svg\" ");
-	//	fprintf(svg, "xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n");
-
-
-
-	//	/* write line segments */
-	//	//for (i = 0; i<n; i++)
-	//	for (; begin != end; ++begin)
-	//	{
-	//		std::string str = "red";
-	//		const LSDLineSegment& item = *begin;
-
-	//		fprintf(svg, "<line class=\"draggable\" x1=\"%f\" y1=\"%f\" x2=\"%f\" y2=\"%f\"  transform=\"matrix(1 0 0 1 0 0)\" onmousedown=\"selectElement(evt)\"  ",
-	//			item.x1, item.y1,
-	//			item.x2, item.y2);
-	//		fprintf(svg, "stroke-width=\"%f\" stroke=\"%s\" />\n",
-	//			width <= 0.0 ? item.width : width, str.c_str());
-	//	}
-
-	//	fclose(svg);
-	//}
 };

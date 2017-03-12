@@ -54,6 +54,29 @@ namespace ArchImgProc
 
 			throw std::runtime_error("not implemented");
 		}
+
+		static std::vector<LSDLineSegment> DoLSD(ArchImgProc::PixelType pixeltype, const void* ptr, int stride, int width, int height, float scaleX = 1, float scaleY = 1)
+		{
+			float scales[2] = { scaleX,scaleY };
+			const float* ptrScales = (scaleX != 1 || scaleY != 1) ? scales : nullptr;
+			switch (pixeltype)
+			{
+			case ArchImgProc::PixelType::BGR24:
+			{
+				Internal::LSDNew<float, float> lsd;
+				auto r = lsd.LSD_BGR((const unsigned char*)ptr, width, height, stride, ptrScales);
+				return r;
+			}
+			case ArchImgProc::PixelType::Gray8:
+			{
+				Internal::LSDNew<float, float> lsd;
+				auto r = lsd.LSD_Gray8((const unsigned char*)ptr, width, height, stride, ptrScales);
+				return r;
+			}
+			}
+
+			throw std::runtime_error("not implemented");
+		}
 	};
 
 

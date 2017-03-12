@@ -226,11 +226,10 @@ namespace ArchImgProc
 				}
 			};
 
-			constexpr static calcFLT DefaultQuant() { return static_cast<calcFLT>(2.0); }       /* Bound to the quantization error on the
-																					  gradient norm.								    */
-			constexpr static calcFLT DefaultAng_th() { return static_cast<calcFLT>(22.5); }     /* Gradient angle tolerance in degrees.           */
-			constexpr static calcFLT DefaultLog_eps() { return 0; }							  /* Detection threshold: -log10(NFA) > log_eps     */
-			constexpr static calcFLT DefaultDensity_th() { return  static_cast<calcFLT>(0.7); } /* Minimal density of region points in rectangle. */
+			constexpr static calcFLT DefaultQuant() { return static_cast<calcFLT>(2.0); }       /* Bound to the quantization error on the gradient norm.	*/
+			constexpr static calcFLT DefaultAng_th() { return static_cast<calcFLT>(22.5); }     /* Gradient angle tolerance in degrees.					    */
+			constexpr static calcFLT DefaultLog_eps() { return 0; }							    /* Detection threshold: -log10(NFA) > log_eps				*/
+			constexpr static calcFLT DefaultDensity_th() { return  static_cast<calcFLT>(0.7); } /* Minimal density of region points in rectangle.			*/
 			constexpr static int DefaultN_bins() { return 1024; }
 		public:
 			typedef ArchImgProc::LineSegment<calcFLT> LineSegment;
