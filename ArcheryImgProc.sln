@@ -30,6 +30,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lsd", "Lsd", "{A12B9B5B-307
 		ArchImgProc\Lsd\LsdImp.h = ArchImgProc\Lsd\LsdImp.h
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Detection", "Detection", "{21657F4D-87C0-4219-9A25-DDC0626ED763}"
+	ProjectSection(SolutionItems) = preProject
+		ArchImgProc\Detection\ArrowDetect.h = ArchImgProc\Detection\ArrowDetect.h
+		ArchImgProc\Detection\utils.h = ArchImgProc\Detection\utils.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -53,5 +59,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{EFB096F1-A6C2-4F03-9F75-14C1EA2AF7A7} = {A392B2C9-6F2A-4422-8B3A-30C88FA965E1}
 		{A12B9B5B-3076-45A9-81DC-AC4E6A6CCC64} = {A392B2C9-6F2A-4422-8B3A-30C88FA965E1}
+		{21657F4D-87C0-4219-9A25-DDC0626ED763} = {A392B2C9-6F2A-4422-8B3A-30C88FA965E1}
 	EndGlobalSection
 EndGlobal
