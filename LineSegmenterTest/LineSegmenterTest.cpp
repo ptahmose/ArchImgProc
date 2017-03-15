@@ -7,6 +7,7 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "../ArchImgProc/Detection/ArrowDetect.h"
 
 using namespace ArchImgProc;
 using namespace cv;
@@ -24,6 +25,19 @@ static void TestBitmap1()
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(lineSegments.cbegin(), lineSegments.cend(), LR"(W:\test.svg)");
 }
 
+static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
+{
+	float centerX = width / 2;
+	float centerY = height / 2;
+
+	CHoughOnLineSegments<float,size_t> hough(CUtils::CalcDistanceSquared(0.f, 0.f, centerX, centerY), 100, 100);
+	for (size_t i=0;i<lines.size();++i)
+	{
+		const auto& l = lines[i];
+		hough.Add(i, l[0] - centerX, l[1] - centerY, l[2] - centerX, l[3] - centerY );
+	}
+}
+
 static void TestBitmap2()
 {
 	Mat src = imread(R"(W:\Temp\Archery\MATLAB\ShowResultpk73.png)", 1);
@@ -32,7 +46,7 @@ static void TestBitmap2()
 	Mat dst(src.rows / 2, src.cols / 2, src.type());
 	pyrDown(src, dst);
 
-	
+
 
 	//Mat greyMat;
 	//cv::cvtColor(dst, greyMat, COLOR_BGR2GRAY);
@@ -42,8 +56,11 @@ static void TestBitmap2()
 	imshow("Gaussian", greyMat);
 
 	std::vector< Vec4f > lines;
-	auto lsd = createLineSegmentDetector(LineSegmentDetectorModes::LSD_REFINE_STD,1);
+	auto lsd = createLineSegmentDetector(LineSegmentDetectorModes::LSD_REFINE_STD, 1);
 	lsd->detect(greyMat, lines);
+
+	HoughTest(lines, greyMat.cols, greyMat.rows);
+
 	auto it = lines.cbegin();
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(
 		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool

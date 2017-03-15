@@ -76,7 +76,7 @@ namespace ArchImgProc
 			int binIdxX = GetBinIdxFromAngle<float>(angle);
 			int binIdxY = GetBinIdxFromDistance(distance);
 			int val = (int)ceil(CUtils::CalcDistance(x1, y1, x2, y2));
-			this->__super::Add(binIdxX, binIdxY, val);
+			this->accumulator.Add(binIdxX, binIdxY, val);
 		}
 
 	private:
@@ -88,30 +88,30 @@ namespace ArchImgProc
 				f = 1;
 			}
 
-			int idx = (int)floor(f * NumberOfBinsForDistance);
+			int idx = (int)floor(f * this->distanceBinsCount);
 			return idx;
 		}
 
 		template <typename tFlt>
-		static int GetBinIdxFromAngle(tFlt angle)
+		int GetBinIdxFromAngle(tFlt angle)
 		{
-			typename tFlt v = angle + (tFlt)(M_PI);
-			v = v / (M_PI * 2);
+			typename tFlt v = angle + (tFlt)(3.14159265358979323846);
+			v = v / (tFlt)(3.14159265358979323846 * 2);
 			// v is now in the range 0...1
-			int idx = (int)(v * NumberOfBinsForAngle);
+			int idx = (int)(v * this->angleBinsCount);
 			if (idx < 0)
 			{
 				idx = 0;
 			}
-			else if (idx >= NumberOfBinsForAngle)
+			else if (idx >= this->angleBinsCount)
 			{
-				idx = NumberOfBinsForAngle;
+				idx = this->angleBinsCount;
 			}
 
 			return idx;
 		}
 
-		static void CalcAngleAndDistance(tFlt x1, tFlt y1, tFlt x2, tFlt y2, tFlt* angle, tFlt* distance)
+		void CalcAngleAndDistance(tFlt x1, tFlt y1, tFlt x2, tFlt y2, tFlt* angle, tFlt* distance)
 		{
 			tFlt nx = y1 - y2;
 			tFlt ny = -(x1 - x2);
