@@ -30,12 +30,41 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	float centerX = width / 2;
 	float centerY = height / 2;
 
-	CHoughOnLineSegments<float,size_t> hough(CUtils::CalcDistanceSquared(0.f, 0.f, centerX, centerY), 100, 100);
-	for (size_t i=0;i<lines.size();++i)
+	CHoughOnLineSegments<float, size_t> hough(CUtils::CalcDistance(0.f, 0.f, centerX, centerY), 100, 100);
+	for (size_t i = 0; i < lines.size(); ++i)
 	{
 		const auto& l = lines[i];
-		hough.Add(i, l[0] - centerX, l[1] - centerY, l[2] - centerX, l[3] - centerY );
+		hough.Add(i, l[0] - centerX, l[1] - centerY, l[2] - centerX, l[3] - centerY);
 	}
+
+	hough.Sort();
+
+	float length, angleMin, angleMax, distMin, distMax;
+	hough.GetAngleAndDistanceMaxMinSortedByCount(0, &length, &angleMin, &angleMax, &distMin, &distMax);
+
+	auto it = lines.cbegin();
+	CWriteOutData::WriteLineSegmentsAsSvg<float>(
+		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
+	{
+		if (it == lines.cend())
+		{
+			return false;
+		}
+
+		float angle, distance;
+		CUtils::ConvertToHessianNormalForm(it->val[0] - centerX, it->val[1] - centerY, it->val[2] - centerX, it->val[3] - centerY, &angle, &distance);
+		if ((angleMin <= angle&&angleMax >= angle) && (distMin <= distance&&distMax >= distance))
+		{
+			color = "red";
+		}
+
+		x1 = it->val[0]; y1 = it->val[1]; x2 = it->val[2]; y2 = it->val[3];
+
+		++it;
+		return true;
+	},
+		width, height,
+		LR"(W:\test_OCV_2.svg)");
 }
 
 static void TestBitmap2()

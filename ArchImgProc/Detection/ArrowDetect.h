@@ -36,7 +36,7 @@ namespace ArchImgProc
 			});
 		}
 
-		bool GetFromSorted(tIdx i, int& x, int& y, int* count) const
+		bool GetFromSorted(tIdx i, int& x, int& y, tCnt* count) const
 		{
 			if (i >= this->sortedIdx.size())return false;
 			int idx = this->sortedIdx[i];
@@ -46,6 +46,7 @@ namespace ArchImgProc
 			{
 				*count = this->acc[this->sortedIdx[i]];
 			}
+
 			return true;
 		}
 	};
@@ -79,6 +80,49 @@ namespace ArchImgProc
 			this->accumulator.Add(binIdxX, binIdxY, val);
 		}
 
+		void Sort()
+		{
+			this->accumulator.Sort();
+		}
+
+		bool GetAngleAndDistanceMaxMinSortedByCount(int i, float* length, float* angleMin, float* angleMax, float* distanceMin, float* distanceMax)
+		{
+			//TestAngle();
+
+			int x, y;
+			bool b = this->accumulator.GetFromSorted(i, x, y, length);
+			if (b == false)
+			{
+				return false;
+			}
+
+			if (angleMin != nullptr)
+			{
+				float a = (float(x) / this->angleBinsCount/*NumberOfBinsForAngle*/)*1.5*3.14159265358979323846 - 3.14159265358979323846 / 2;
+				*angleMin = a;
+			}
+
+			if (angleMax != nullptr)
+			{
+				float a = (float(x + 1) / this->angleBinsCount/*NumberOfBinsForAngle*/)*1.5*3.14159265358979323846 - 3.14159265358979323846 / 2;
+				*angleMax = a;
+			}
+
+			if (distanceMin != nullptr)
+			{
+				float d = (float(y) / this->distanceBinsCount/* NumberOfBinsForDistance*/)*this->maxDistance;
+				*distanceMin = d;
+			}
+
+			if (distanceMax != nullptr)
+			{
+				float d = (float(y + 1) / this->distanceBinsCount /*NumberOfBinsForDistance*/)*this->maxDistance;
+				*distanceMax = d;
+			}
+
+			return true;
+		}
+
 	private:
 		int GetBinIdxFromDistance(tFlt dist)
 		{
@@ -95,8 +139,8 @@ namespace ArchImgProc
 		template <typename tFlt>
 		int GetBinIdxFromAngle(tFlt angle)
 		{
-			typename tFlt v = angle + (tFlt)(3.14159265358979323846);
-			v = v / (tFlt)(3.14159265358979323846 * 2);
+			typename tFlt v = angle + (tFlt)(3.14159265358979323846/2);
+			v = v / (tFlt)(3.14159265358979323846 * 1.5);
 			// v is now in the range 0...1
 			int idx = (int)(v * this->angleBinsCount);
 			if (idx < 0)
@@ -113,7 +157,8 @@ namespace ArchImgProc
 
 		void CalcAngleAndDistance(tFlt x1, tFlt y1, tFlt x2, tFlt y2, tFlt* angle, tFlt* distance)
 		{
-			tFlt nx = y1 - y2;
+			CUtils::ConvertToHessianNormalForm(x1, y2, x2, y2, angle, distance);
+			/*tFlt nx = y1 - y2;
 			tFlt ny = -(x1 - x2);
 
 			// let p_vec = (lsd.x1,lsd.y1)
@@ -138,7 +183,7 @@ namespace ArchImgProc
 			if (angle != nullptr)
 			{
 				*angle = _angle;
-			}
+			}*/
 		}
 	};
 
