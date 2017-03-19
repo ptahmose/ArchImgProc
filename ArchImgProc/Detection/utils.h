@@ -46,12 +46,12 @@ namespace ArchImgProc
 			}
 		}
 
-		template<typename ForwardIterator,typename tSum>
+		template<typename tSum,typename ForwardIterator>
 		static typename ForwardIterator::value_type CalculateAverage(ForwardIterator first, ForwardIterator last)
 		{
 			tSum sum = 0;
 			size_t count = 0;
-			while (first!=last)
+			while (first != last)
 			{
 				++count;
 				sum += *first;
@@ -59,6 +59,53 @@ namespace ArchImgProc
 			}
 
 			return (ForwardIterator::value_type)(sum / count);
+		}
+
+		template<typename tFlt>
+		static tFlt CalculateAverage(std::function<bool(tFlt&)> getValue)
+		{
+			tFlt sum = 0;
+			size_t count = 0;
+			tFlt v;
+			for(;;)
+			{
+				if (getValue(v)==false)
+				{
+					return sum / count;
+				}
+
+				++count;
+				sum += v;
+			}
+		}
+
+
+		/// <summary>
+		/// Project point onto the line define by (pt1OnLineX,pt1OnLineY) and (pt2OnLineX,pt1OnLineY). We return a float that gives the factor
+		/// to be multiplied by the vector (pt2OnLine - pt1OnLine) to give the projected point on the line - so
+		/// projected point = pt1OnLine + value * (pt2OnLine - pt1OnLine).
+		/// If the returned value is between 0 and 1, then the projected point is between the two points.
+		/// </summary>
+		/// <param name="px">		 X-coordinate of the point to project onto the line.</param>
+		/// <param name="py">		 y-coordinate of the point to project onto the line.</param>
+		/// <param name="pt1OnLineX">X-coordinate of the 1st point on the line.</param>
+		/// <param name="pt1OnLineY">Y-coordinate of the 1st point on the line.</param>
+		/// <param name="pt2OnLineX">X-coordinate of the 2nd point on the line.</param>
+		/// <param name="pt2OnLineY">Y-coordinate of the 2nd point on the line.</param>
+		/// <returns>The value so that "projected point" = pt1OnLine + value * (pt2OnLine - pt1OnLine).</returns>
+		template <typename tFlt>
+		static tFlt ProjectPointOntoLine(tFlt px, tFlt py, tFlt pt1OnLineX, tFlt pt1OnLineY, tFlt pt2OnLineX, tFlt pt2OnLineY)
+		{
+			tFlt v1x = pt2OnLineX - pt1OnLineX;
+			tFlt v1y = pt2OnLineY - pt1OnLineY;
+
+			tFlt v2x = px - pt1OnLineX;
+			tFlt v2y = py - pt1OnLineY;
+
+			tFlt n = v1x*v2x + v1y*v2y;
+			tFlt d = v1x*v1x + v1y*v1y;
+			tFlt r = n / d;
+			return r;
 		}
 
 	};

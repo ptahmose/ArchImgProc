@@ -62,6 +62,37 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	},
 		angleMin, angleMax, distMin, distMax, vecIndex);
 
+	std::vector<size_t>::const_iterator itIndices = vecIndex.cbegin();
+	float angleAverage = CUtils::CalculateAverage<float>(
+		[&](float& v)->bool
+	{
+		if (itIndices == vecIndex.cend())
+		{
+			return false;
+		}
+
+		float angle;
+		CUtils::ConvertToHessianNormalForm(lines[*itIndices].val[0] - centerX, lines[*itIndices].val[1] - centerY, lines[*itIndices].val[2] - centerX, lines[*itIndices].val[3] - centerY, &angle, (float*)nullptr);
+		++itIndices;
+		v = angle;
+	});
+
+	itIndices = vecIndex.cbegin();
+	float distAverage = CUtils::CalculateAverage<float>(
+		[&](float& v)->bool
+	{
+		if (itIndices == vecIndex.cend())
+		{
+			return false;
+		}
+
+		float distance;
+		CUtils::ConvertToHessianNormalForm(lines[*itIndices].val[0] - centerX, lines[*itIndices].val[1] - centerY, lines[*itIndices].val[2] - centerX, lines[*itIndices].val[3] - centerY, (float*)nullptr, &distance);
+		++itIndices;
+		v = distance;
+	});
+
+
 
 	auto it = lines.cbegin();
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(
