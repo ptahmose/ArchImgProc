@@ -42,6 +42,27 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	float length, angleMin, angleMax, distMin, distMax;
 	hough.GetAngleAndDistanceMaxMinSortedByCount(0, &length, &angleMin, &angleMax, &distMin, &distMax);
 
+	std::vector<size_t> vecIndex;
+	std::vector<Vec4f>::const_iterator iter = lines.cbegin();
+	CHoughOnLineSegments<float, size_t>::FindItemsInRange(
+		[&](size_t& idx, float& x1, float& y1, float& x2, float& y2)->bool
+	{
+		if (iter != lines.cend())
+		{
+			idx = std::distance(lines.cbegin(), iter);
+			x1 = iter->val[0] - centerX;
+			y1 = iter->val[1] - centerY;
+			x2 = iter->val[2] - centerX;
+			y2 = iter->val[3] - centerY;
+			++iter;
+			return true;
+		}
+
+		return false;
+	},
+		angleMin, angleMax, distMin, distMax, vecIndex);
+
+
 	auto it = lines.cbegin();
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(
 		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
@@ -55,6 +76,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		CUtils::ConvertToHessianNormalForm(it->val[0] - centerX, it->val[1] - centerY, it->val[2] - centerX, it->val[3] - centerY, &angle, &distance);
 		if ((angleMin <= angle&&angleMax >= angle) && (distMin <= distance&&distMax >= distance))
 		{
+			auto idx = std::distance(lines.cbegin(), it);
 			color = "red";
 		}
 

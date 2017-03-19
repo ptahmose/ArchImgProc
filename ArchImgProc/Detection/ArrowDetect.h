@@ -123,6 +123,28 @@ namespace ArchImgProc
 			return true;
 		}
 
+		static void FindItemsInRange(std::function<bool(tLsIdx&, tFlt&, tFlt&, tFlt&, tFlt&)> func, tFlt  angleMin, tFlt angleMax, tFlt distMin, tFlt distMax, std::vector<tLsIdx>& indices)
+		{
+			indices.clear();
+			tFlt x1, x2, y1, y2;
+			tLsIdx idx;
+			for (;;)
+			{
+				if (!func(idx, x1, y1, x2, y2))
+				{
+					return;
+				}
+
+				tFlt angle, distance;
+				CalcAngleAndDistance(x1, y1, x2, y2, &angle, &distance);
+
+				if ((angleMin <= angle&&angleMax >= angle) && (distMin <= distance&&distMax >= distance))
+				{
+					indices.push_back(idx);
+				}
+			}
+		}
+
 	private:
 		int GetBinIdxFromDistance(tFlt dist)
 		{
@@ -139,7 +161,7 @@ namespace ArchImgProc
 		template <typename tFlt>
 		int GetBinIdxFromAngle(tFlt angle)
 		{
-			typename tFlt v = angle + (tFlt)(3.14159265358979323846/2);
+			typename tFlt v = angle + (tFlt)(3.14159265358979323846 / 2);
 			v = v / (tFlt)(3.14159265358979323846 * 1.5);
 			// v is now in the range 0...1
 			int idx = (int)(v * this->angleBinsCount);
@@ -155,9 +177,9 @@ namespace ArchImgProc
 			return idx;
 		}
 
-		void CalcAngleAndDistance(tFlt x1, tFlt y1, tFlt x2, tFlt y2, tFlt* angle, tFlt* distance)
+		static void CalcAngleAndDistance(tFlt x1, tFlt y1, tFlt x2, tFlt y2, tFlt* angle, tFlt* distance)
 		{
-			CUtils::ConvertToHessianNormalForm(x1, y2, x2, y2, angle, distance);
+			CUtils::ConvertToHessianNormalForm(x1, y1, x2, y2, angle, distance);
 			/*tFlt nx = y1 - y2;
 			tFlt ny = -(x1 - x2);
 

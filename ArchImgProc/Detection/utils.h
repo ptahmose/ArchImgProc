@@ -31,8 +31,6 @@ namespace ArchImgProc
 			tFlt n0y = factor*ny / abs_n;
 
 			tFlt _dist = x1*n0x + y1*n0y;
-			tFlt _angle;
-			_angle = atan2(n0y, n0x);
 
 			// _angle must be >= -90 degree and <= 180 degree (in our case, where all coordinates are positive)
 			//assert(_angle >= -M_PI / 2 && _angle <= M_PI);
@@ -44,8 +42,23 @@ namespace ArchImgProc
 
 			if (angle != nullptr)
 			{
-				*angle = _angle;
+				*angle = atan2(n0y, n0x);
 			}
+		}
+
+		template<typename ForwardIterator,typename tSum>
+		static typename ForwardIterator::value_type CalculateAverage(ForwardIterator first, ForwardIterator last)
+		{
+			tSum sum = 0;
+			size_t count = 0;
+			while (first!=last)
+			{
+				++count;
+				sum += *first;
+				++first;
+			}
+
+			return (ForwardIterator::value_type)(sum / count);
 		}
 
 	};
