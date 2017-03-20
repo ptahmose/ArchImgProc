@@ -46,7 +46,33 @@ namespace ArchImgProc
 			}
 		}
 
-		template<typename tSum,typename ForwardIterator>
+		template<typename tFlt>
+		static void ConvertFromHessianToPointAndVector(tFlt angle, tFlt distance, tFlt* pX, tFlt* pY, tFlt* pVecX, tFlt* pVecY)
+		{
+			tFlt tX = cos(angle)*distance;
+			tFlt tY = sin(angle)*distance;
+			if (pX != nullptr)
+			{
+				*pX = tX;
+			}
+
+			if (pY != nullptr)
+			{
+				*pY = tY;
+			}
+
+			if (pVecX!=nullptr)
+			{
+				*pVecX = -tX;
+			}
+
+			if (pVecY != nullptr)
+			{
+				*pVecY = tY;
+			}
+		}
+
+		template<typename tSum, typename ForwardIterator>
 		static typename ForwardIterator::value_type CalculateAverage(ForwardIterator first, ForwardIterator last)
 		{
 			tSum sum = 0;
@@ -67,9 +93,9 @@ namespace ArchImgProc
 			tFlt sum = 0;
 			size_t count = 0;
 			tFlt v;
-			for(;;)
+			for (;;)
 			{
-				if (getValue(v)==false)
+				if (getValue(v) == false)
 				{
 					return sum / count;
 				}

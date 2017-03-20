@@ -1,5 +1,6 @@
 #pragma once
 
+#include "csgutils.h"
 #include "utils.h"
 
 namespace ArchImgProc

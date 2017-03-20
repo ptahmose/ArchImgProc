@@ -33,6 +33,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Detection", "Detection", "{21657F4D-87C0-4219-9A25-DDC0626ED763}"
 	ProjectSection(SolutionItems) = preProject
 		ArchImgProc\Detection\ArrowDetect.h = ArchImgProc\Detection\ArrowDetect.h
+		ArchImgProc\Detection\basictypes.h = ArchImgProc\Detection\basictypes.h
+		ArchImgProc\Detection\csgutils.h = ArchImgProc\Detection\csgutils.h
 		ArchImgProc\Detection\utils.h = ArchImgProc\Detection\utils.h
 	EndProjectSection
 EndProject

@@ -116,7 +116,6 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 
 			x1 = result.pt1.x; y1 = result.pt1.y; x2 = result.pt2.x; y2 = result.pt2.y;
 			color = "green";
-			resultUsed = true;
 			return true;
 		}
 
