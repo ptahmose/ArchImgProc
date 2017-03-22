@@ -13,8 +13,15 @@ namespace ArchImgProc
 		}
 	};
 
+	template<typename tFlt>
+	struct Vector2
+	{
+		tFlt	x, y;
+	};
+
 	struct IntRect
 	{
 		int x, y, w, h;
 	};
+
 }

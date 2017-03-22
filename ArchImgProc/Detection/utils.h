@@ -105,7 +105,6 @@ namespace ArchImgProc
 			}
 		}
 
-
 		/// <summary>
 		/// Project point onto the line define by (pt1OnLineX,pt1OnLineY) and (pt2OnLineX,pt1OnLineY). We return a float that gives the factor
 		/// to be multiplied by the vector (pt2OnLine - pt1OnLine) to give the projected point on the line - so

@@ -2,6 +2,7 @@
 
 #include "csgutils.h"
 #include "utils.h"
+#include "LineSearcher.h"
 
 namespace ArchImgProc
 {

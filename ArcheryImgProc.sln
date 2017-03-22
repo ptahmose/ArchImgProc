@@ -35,6 +35,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Detection", "Detection", "{
 		ArchImgProc\Detection\ArrowDetect.h = ArchImgProc\Detection\ArrowDetect.h
 		ArchImgProc\Detection\basictypes.h = ArchImgProc\Detection\basictypes.h
 		ArchImgProc\Detection\csgutils.h = ArchImgProc\Detection\csgutils.h
+		ArchImgProc\Detection\LineSearcher.h = ArchImgProc\Detection\LineSearcher.h
 		ArchImgProc\Detection\utils.h = ArchImgProc\Detection\utils.h
 	EndProjectSection
 EndProject

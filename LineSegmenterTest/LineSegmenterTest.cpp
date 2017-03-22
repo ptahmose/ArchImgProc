@@ -98,6 +98,16 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	p1.x += centerX; p2.x += centerX;
 	p1.y += centerY; p2.y += centerY;
 	// pointX/Y is now a point on the line, and directionX/Y is the direction vector
+	
+
+	// get a unit-vector in direction from p1 to p2
+	auto dirX = p2.x - p1.x;
+	auto dirY = p2.y - p1.y;
+	auto lengthDir = sqrt(dirX*dirX + dirY*dirY);
+	dirX /= lengthDir; dirY /= lengthDir;
+
+
+
 
 
 	auto result = CsgUtils::CalcIntersectionPoints(p1, p2, IntRect{ 0, 0, width, height });
