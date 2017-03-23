@@ -98,7 +98,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	p1.x += centerX; p2.x += centerX;
 	p1.y += centerY; p2.y += centerY;
 	// pointX/Y is now a point on the line, and directionX/Y is the direction vector
-	
+
 
 	// get a unit-vector in direction from p1 to p2
 	auto dirX = p2.x - p1.x;
@@ -106,8 +106,22 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	auto lengthDir = sqrt(dirX*dirX + dirY*dirY);
 	dirX /= lengthDir; dirY /= lengthDir;
 
+	itIndices = vecIndex.cbegin();
+	auto lsStartStop = CLineSearcher<float>::CreateLineSegmentsStartStop(p1, ArchImgProc::Point<float> { p1.x + dirX, p1.y + dirY },
+		[&](ArchImgProc::Point<float>& p1Ls, ArchImgProc::Point<float>& p2LS)->bool
+	{
+		if (itIndices == vecIndex.cend())
+		{
+			return false;
+		}
 
+		p1Ls = ArchImgProc::Point<float>{ lines[*itIndices].val[0], lines[*itIndices].val[1] };
+		p2LS = ArchImgProc::Point<float>{ lines[*itIndices].val[2] , lines[*itIndices].val[3] };
+		++itIndices;
+		return true;
+	});
 
+	CLineSearcher<float>::Sort(lsStartStop);
 
 
 	auto result = CsgUtils::CalcIntersectionPoints(p1, p2, IntRect{ 0, 0, width, height });
