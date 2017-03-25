@@ -122,6 +122,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	});
 
 	CLineSearcher<float>::Sort(lsStartStop);
+	auto linked = CLineSearcher<float>::LinkOverlapping(lsStartStop);
 
 
 	auto result = CsgUtils::CalcIntersectionPoints(p1, p2, IntRect{ 0, 0, width, height });

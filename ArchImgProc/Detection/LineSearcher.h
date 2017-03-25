@@ -55,5 +55,33 @@ namespace ArchImgProc
 				return a.start < b.start;
 			});
 		}
+
+		static std::vector<LineSegmentStartEnd> LinkOverlapping(const std::vector<LineSegmentStartEnd>& v)
+		{
+			if (v.size() < 2)
+			{
+				return std::vector<LineSegmentStartEnd>(v);
+			}
+
+			std::vector<LineSegmentStartEnd> result;
+			std::vector<LineSegmentStartEnd>::const_iterator it = v.begin();
+			LineSegmentStartEnd cur = *it;
+			++it;
+			for (; it != v.end(); ++it)
+			{
+				if (cur.end >= it->start)
+				{
+					cur.end = (std::max)(cur.end, it->end);
+				}
+				else
+				{
+					result.push_back(cur);
+					cur = *it;
+				}
+			}
+
+			result.push_back(cur);
+			return result;
+		}
 	};
 }
