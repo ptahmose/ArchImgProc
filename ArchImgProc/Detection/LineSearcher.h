@@ -60,11 +60,12 @@ namespace ArchImgProc
 		{
 			if (v.size() < 2)
 			{
+				// create a copy and return it
 				return std::vector<LineSegmentStartEnd>(v);
 			}
 
 			std::vector<LineSegmentStartEnd> result;
-			std::vector<LineSegmentStartEnd>::const_iterator it = v.begin();
+			typename std::vector<LineSegmentStartEnd>::const_iterator it = v.begin();
 			LineSegmentStartEnd cur = *it;
 			++it;
 			for (; it != v.end(); ++it)
@@ -82,6 +83,36 @@ namespace ArchImgProc
 
 			result.push_back(cur);
 			return result;
+		}
+
+		static std::vector<LineSegmentStartEnd> LinkSmallGaps(const std::vector<LineSegmentStartEnd>& v, tFlt maxGap)
+		{
+			if (v.size() < 2)
+			{
+				// create a copy and return it
+				return std::vector<LineSegmentStartEnd>(v);
+			}
+
+			std::vector<LineSegmentStartEnd> result;
+			typename std::vector<LineSegmentStartEnd>::const_iterator it = v.begin();
+			LineSegmentStartEnd cur = *it;
+			++it;
+			for (; it != v.end(); ++it)
+			{
+				if ((cur.end+maxGap) >= it->start)
+				{
+					cur.end = (std::max)(cur.end, it->end);
+				}
+				else
+				{
+					result.push_back(cur);
+					cur = *it;
+				}
+			}
+
+			result.push_back(cur);
+			return result;
+
 		}
 	};
 }
