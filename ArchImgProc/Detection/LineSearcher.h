@@ -2,6 +2,91 @@
 
 namespace ArchImgProc
 {
+	template <typename tFlt,typename tLineSegment>
+	class CHoughLineRefiner
+	{
+	private:
+		const std::vector<tLineSegment>& lines;
+		std::vector<size_t>& indices;
+		int width, height;
+	public:
+		class Result
+		{
+			tFlt x1, y1, x2, y2;
+		};
+	public:
+		CHoughLineRefiner(const std::vector<tLineSegment>& lines, std::vector<size_t>& indices, int width, int height)
+			:lines(lines), indices(indices), width(width), height(height)
+		{}
+
+		void Refine()
+		{
+			ArchImgProc::Point<float> p; ArchImgProc::Vector2<float> dir;
+			this->CalcPointAndDirectionVectorByAveragingLineSegments(p, dir);
+		}
+
+	private:
+		void CalcPointAndDirectionVectorByAveragingLineSegments(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float>& dir)
+		{
+			ArchImgProc::Point<float> p1, p2;
+			this->CalcTwoPointsOnLineByAveragingLineSegments(p1, p2);
+			// get a unit-vector in direction from p1 to p2
+			dir.x = p2.x - p1.x;
+			dir.y = p2.y - p1.y;
+			auto lengthDir = std::sqrt(dir.x*dir.x + dir.y*dir.y);
+			dir.x /= lengthDir; dir.y /= lengthDir;
+			p = p1;
+		}
+
+		void CalcTwoPointsOnLineByAveragingLineSegments(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
+		{
+			float avgAngle, avgDistance;
+			this->CalcAverageAngleAndDistance(avgAngle, avgDistance);
+			CsgUtils::HesseNormalFormToTwoPoints(avgAngle, avgDistance, p1, p2);
+			float centerX = width / 2.f;
+			float centerY = height / 2.f;
+			p1.x += centerX; p2.x += centerX;
+			p1.y += centerY; p2.y += centerY;
+		}
+
+		void CalcAverageAngleAndDistance(float& avgAngle, float&  avgDistance)
+		{
+			float centerX = width / 2.f;
+			float centerY = height / 2.f;
+
+			std::vector<size_t>::const_iterator itIndices = this->indices.cbegin();
+			avgAngle = CUtils::CalculateAverage<float>(
+				[&](float& v)->bool
+			{
+				if (itIndices == this->indices.cend())
+				{
+					return false;
+				}
+
+				float angle;
+				CUtils::ConvertToHessianNormalForm(lines[*itIndices].val[0] - centerX, lines[*itIndices].val[1] - centerY, lines[*itIndices].val[2] - centerX, lines[*itIndices].val[3] - centerY, &angle, (float*)nullptr);
+				++itIndices;
+				v = angle;
+			});
+
+			itIndices = this->indices.cbegin();
+			avgDistance = CUtils::CalculateAverage<float>(
+				[&](float& v)->bool
+			{
+				if (itIndices == this->indices.cend())
+				{
+					return false;
+				}
+
+				float distance;
+				CUtils::ConvertToHessianNormalForm(lines[*itIndices].val[0] - centerX, lines[*itIndices].val[1] - centerY, lines[*itIndices].val[2] - centerX, lines[*itIndices].val[3] - centerY, (float*)nullptr, &distance);
+				++itIndices;
+				v = distance;
+			});
+		}
+	};
+
+
 	template <typename tFlt>
 	class CLineSearcher
 	{
@@ -99,7 +184,7 @@ namespace ArchImgProc
 			++it;
 			for (; it != v.end(); ++it)
 			{
-				if ((cur.end+maxGap) >= it->start)
+				if ((cur.end + maxGap) >= it->start)
 				{
 					cur.end = (std::max)(cur.end, it->end);
 				}

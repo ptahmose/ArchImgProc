@@ -40,7 +40,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	hough.Sort();
 
 	float length, angleMin, angleMax, distMin, distMax;
-	hough.GetAngleAndDistanceMaxMinSortedByCount(0, &length, &angleMin, &angleMax, &distMin, &distMax);
+	hough.GetAngleAndDistanceMaxMinSortedByCount(1, &length, &angleMin, &angleMax, &distMin, &distMax);
 
 	std::vector<size_t> vecIndex;
 	std::vector<Vec4f>::const_iterator iter = lines.cbegin();
@@ -61,6 +61,10 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		return false;
 	},
 		angleMin, angleMax, distMin, distMax, vecIndex);
+
+	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height);
+	refiner.Refine();
+
 
 	std::vector<size_t>::const_iterator itIndices = vecIndex.cbegin();
 	float angleAverage = CUtils::CalculateAverage<float>(
@@ -123,7 +127,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 
 	CLineSearcher<float>::Sort(lsStartStop);
 	auto linked = CLineSearcher<float>::LinkOverlapping(lsStartStop);
-	auto linked2 = CLineSearcher<float>::LinkSmallGaps(linked,10);
+	auto linked2 = CLineSearcher<float>::LinkSmallGaps(linked, 10);
 
 	auto result = CsgUtils::CalcIntersectionPoints(p1, p2, IntRect{ 0, 0, width, height });
 
