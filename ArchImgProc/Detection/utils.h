@@ -6,6 +6,18 @@ namespace ArchImgProc
 	{
 	public:
 		template<typename tFlt>
+		static tFlt DegToRad(tFlt x)
+		{
+			return (x / 180)*((tFlt)3.14159265358979323846);
+		}
+
+		template<typename tFlt>
+		static tFlt RadToDeg(tFlt x)
+		{
+			return (x / ((tFlt)3.14159265358979323846)) * 180;
+		}
+
+		template<typename tFlt>
 		static tFlt CalcDistance(tFlt x1, tFlt y1, tFlt x2, tFlt y2)
 		{
 			return std::sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));

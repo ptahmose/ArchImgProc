@@ -119,10 +119,24 @@ namespace ArchImgProc
 	template <typename tFlt, typename tLineSegment>
 	class CHoughLineRefiner
 	{
+	public:
+		struct Parameters
+		{
+			/// <summary>The maximum angle difference (in radians).</summary>
+			tFlt	maxAngleDiff;
+			tFlt	maxDistance;
+
+			void SetDefaults()
+			{
+				this->maxDistance = 8;
+				this->maxAngleDiff = CUtils::DegToRad(9.f);
+			}
+		};
 	private:
 		const std::vector<tLineSegment>& lines;
 		std::vector<size_t>& indices;
 		int width, height;
+		Parameters parameters;
 	public:
 		class Result
 		{
@@ -131,7 +145,9 @@ namespace ArchImgProc
 	public:
 		CHoughLineRefiner(const std::vector<tLineSegment>& lines, std::vector<size_t>& indices, int width, int height)
 			:lines(lines), indices(indices), width(width), height(height)
-		{}
+		{
+			this->parameters.SetDefaults();
+		}
 
 		void Refine()
 		{
@@ -139,11 +155,60 @@ namespace ArchImgProc
 			this->CalcPointAndDirectionVectorByAveragingLineSegments(p, dir);
 
 			// create normalized
-			this->CreateLinkedSegments(p, dir);
+			auto linkedSegments = this->CreateLinkedSegments(p, dir);
+
+			// line segments in "linkedSegments": p + linkedSegments[i].start * dir , p + linkedSegments[i].end * dir
+			this->SearchLineSegmentsWithAngleInRangeAndDistanceLess(p, dir, linkedSegments, this->parameters.maxAngleDiff, this->parameters.maxDistance,
+				[](size_t i)->void {return; });
 		}
 
 	private:
-		void CreateLinkedSegments(const ArchImgProc::Point<float>& point, const ArchImgProc::Vector2<float>& normalizedDir)
+		void SearchLineSegmentsWithAngleInRangeAndDistanceLess(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float> dir, const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd>& lineStartStop, float maxAngleDiff, float maxDistance,std::function<void(size_t)> addLineSegment)
+		{
+			tFlt angle = atan(dir.y / dir.x);
+			std::vector<int> candidates;
+			for (std::vector<tLineSegment>::const_iterator it = this->lines.cbegin(); it != this->lines.cend(); ++it)
+			{
+				auto index = it - this->lines.cbegin();
+				if (std::find(this->indices.cbegin(), this->indices.cend(), index) == this->indices.cend())
+				{
+					continue;
+				}
+
+				tFlt angleOfSegment = atan((it->val[1] - it->val[3]) / (it->val[0] - it->val[2]));
+				if (abs(angleOfSegment-angle)>this->parameters.maxAngleDiff)
+				{
+					if (angleOfSegment>angle)
+					{
+						angleOfSegment -= (tFlt)3.14159265358979323846;
+					}
+					else
+					{
+						angle -= (tFlt)3.14159265358979323846;
+					}
+
+					if (abs(angleOfSegment - angle)>this->parameters.maxAngleDiff)
+					{
+						continue;
+					}
+				}
+
+				ArchImgProc::Point<float> dummyPt;
+				tFlt distance = CsgUtils::SegmentSegmentDistanceSquared(
+					p.x, p.y, p.x + dir.x, p.y + dir.y,
+					it->val[0], it->val[1], it->val[2], it->val[3],dummyPt.x,dummyPt.y);
+				distance = sqrt(distance);
+				if (distance > this->parameters.maxDistance)
+				{
+					continue;
+				}
+
+				addLineSegment(index);
+			}
+		}
+
+
+		std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd> CreateLinkedSegments(const ArchImgProc::Point<float>& point, const ArchImgProc::Vector2<float>& normalizedDir)
 		{
 			auto itIndices = this->indices.cbegin();
 			auto lsStartStop = CLineSearcher<float>::CreateLineSegmentsStartStop(point, ArchImgProc::Point<float> { point.x + normalizedDir.x, point.y + normalizedDir.y },
@@ -163,6 +228,7 @@ namespace ArchImgProc
 			CLineSearcher<float>::Sort(lsStartStop);
 			auto linked = CLineSearcher<float>::LinkOverlapping(lsStartStop);
 			auto linked2 = CLineSearcher<float>::LinkSmallGaps(linked, 10);
+			return linked2;
 		}
 
 		void CalcPointAndDirectionVectorByAveragingLineSegments(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float>& dir)

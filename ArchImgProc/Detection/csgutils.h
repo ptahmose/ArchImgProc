@@ -36,7 +36,7 @@ namespace ArchImgProc
 		}
 
 		template <typename tFlt>
-		tFlt PointSegmentDistanceSquared(tFlt px, tFlt py,
+		static tFlt PointSegmentDistanceSquared(tFlt px, tFlt py,
 			tFlt p1x, tFlt p1y,
 			tFlt p2x, tFlt p2y,
 			tFlt& t,
@@ -47,7 +47,7 @@ namespace ArchImgProc
 			tFlt dp1x = px - p1x;
 			tFlt dp1y = py - p1y;
 			const tFlt segLenSquared = (dx * dx) + (dy * dy);
-			if (AreValuesEqual(segLenSquared, 0.0, (tFlt)EPSILON_MIN_VERTEX_DISTANCE_SQUARED))
+			if (AreValuesEqual(segLenSquared, (tFlt)0, (tFlt)EPSILON_MIN_VERTEX_DISTANCE_SQUARED()))
 			{
 				// segment is a point.
 				qx = p1x;
@@ -281,7 +281,7 @@ namespace ArchImgProc
 				else
 				{
 					// point - seg
-					minDist2 = PointSegmentDistanceSquared(p1x, p1y, p3x, p3y, p4x, p4y);
+					minDist2 = PointSegmentDistanceSquared(p1x, p1y, p3x, p3y, p4x, p4y, t, qx, qy);
 				}
 				return minDist2;
 			}
@@ -298,7 +298,7 @@ namespace ArchImgProc
 			// Point2D delta12(p1x - p2x, p1y - p2y);    // dir of p2 -> p1
 			// double d = delta12.Cross2D(delta43);
 			tFlt d = ((p4y - p3y) * (p1x - p2x)) - ((p1y - p2y) * (p4x - p3x));
-			bool bParallel = AreValuesEqual(d, 0, (tFlt)EPSILON_GENERAL());
+			bool bParallel = AreValuesEqual(d, (tFlt)0, (tFlt)EPSILON_GENERAL());
 
 			if (!bParallel)
 			{
