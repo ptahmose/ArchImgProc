@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits> 
+
 namespace ArchImgProc
 {
 	template <typename tFlt>
@@ -157,13 +159,19 @@ namespace ArchImgProc
 			// create normalized
 			auto linkedSegments = this->CreateLinkedSegments(p, dir);
 
+			std::vector<size_t> additionalLineSegments;
 			// line segments in "linkedSegments": p + linkedSegments[i].start * dir , p + linkedSegments[i].end * dir
 			this->SearchLineSegmentsWithAngleInRangeAndDistanceLess(p, dir, linkedSegments, this->parameters.maxAngleDiff, this->parameters.maxDistance,
-				[](size_t i)->void {return; });
+				[&](size_t i)->void {additionalLineSegments.push_back(i); });
+
+			if (!additionalLineSegments.empty())
+			{
+				
+			}
 		}
 
 	private:
-		void SearchLineSegmentsWithAngleInRangeAndDistanceLess(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float> dir, const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd>& lineStartStop, float maxAngleDiff, float maxDistance,std::function<void(size_t)> addLineSegment)
+		void SearchLineSegmentsWithAngleInRangeAndDistanceLess(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float> dir, const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd>& lineStartStop, float maxAngleDiff, float maxDistance, std::function<void(size_t)> addLineSegment)
 		{
 			tFlt angle = atan(dir.y / dir.x);
 			std::vector<int> candidates;
@@ -176,9 +184,9 @@ namespace ArchImgProc
 				}
 
 				tFlt angleOfSegment = atan((it->val[1] - it->val[3]) / (it->val[0] - it->val[2]));
-				if (abs(angleOfSegment-angle)>this->parameters.maxAngleDiff)
+				if (abs(angleOfSegment - angle) > this->parameters.maxAngleDiff)
 				{
-					if (angleOfSegment>angle)
+					if (angleOfSegment > angle)
 					{
 						angleOfSegment -= (tFlt)3.14159265358979323846;
 					}
@@ -187,24 +195,45 @@ namespace ArchImgProc
 						angle -= (tFlt)3.14159265358979323846;
 					}
 
-					if (abs(angleOfSegment - angle)>this->parameters.maxAngleDiff)
+					if (abs(angleOfSegment - angle) > this->parameters.maxAngleDiff)
 					{
 						continue;
 					}
 				}
 
-				ArchImgProc::Point<float> dummyPt;
-				tFlt distance = CsgUtils::SegmentSegmentDistanceSquared(
-					p.x, p.y, p.x + dir.x, p.y + dir.y,
-					it->val[0], it->val[1], it->val[2], it->val[3],dummyPt.x,dummyPt.y);
-				distance = sqrt(distance);
-				if (distance > this->parameters.maxDistance)
+				tFlt minDistance = this->CalcMinDistance(p,dir, lineStartStop, it->val[0], it->val[1], it->val[2], it->val[3]);
+				////ArchImgProc::Point<float> dummyPt;
+				////tFlt distance = CsgUtils::SegmentSegmentDistanceSquared(
+				////	p.x, p.y, p.x + dir.x, p.y + dir.y,
+				////	it->val[0], it->val[1], it->val[2], it->val[3], dummyPt.x, dummyPt.y);
+				////distance = sqrt(distance);
+				if (minDistance > this->parameters.maxDistance)
 				{
 					continue;
 				}
 
 				addLineSegment(index);
 			}
+		}
+
+		tFlt CalcMinDistance(const ArchImgProc::Point<float>& p, const  ArchImgProc::Vector2<float> dir, const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd>& lineStartStop,
+			tFlt x1, tFlt y1, tFlt x2, tFlt y2)
+		{
+			tFlt minDist = (std::numeric_limits<tFlt>::max)();
+			for (const auto lsStartEnd : lineStartStop)
+			{
+				ArchImgProc::Point<tFlt> p1{ p.x + dir.x*lsStartEnd.start,p.y + dir.y*lsStartEnd.start };
+				ArchImgProc::Point<tFlt> p2{ p.x + dir.x*lsStartEnd.end,p.y + dir.y*lsStartEnd.end };
+
+				ArchImgProc::Point<float> dummyPt;
+				tFlt distance = sqrt(CsgUtils::SegmentSegmentDistanceSquared(p1.x,p1.y,p2.x,p2.y,x1,y1,x2,y2, dummyPt.x, dummyPt.y));
+				if (distance < minDist)
+				{
+					minDist = distance;
+				}
+			}
+
+			return minDist;
 		}
 
 
