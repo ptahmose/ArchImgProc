@@ -151,7 +151,7 @@ namespace ArchImgProc
 			this->parameters.SetDefaults();
 		}
 
-		void Refine()
+		std::vector<size_t> Refine()
 		{
 			ArchImgProc::Point<float> p; ArchImgProc::Vector2<float> dir;
 			this->CalcPointAndDirectionVectorByAveragingLineSegments(p, dir);
@@ -164,10 +164,7 @@ namespace ArchImgProc
 			this->SearchLineSegmentsWithAngleInRangeAndDistanceLess(p, dir, linkedSegments, this->parameters.maxAngleDiff, this->parameters.maxDistance,
 				[&](size_t i)->void {additionalLineSegments.push_back(i); });
 
-			if (!additionalLineSegments.empty())
-			{
-				
-			}
+			return additionalLineSegments;
 		}
 
 	private:
@@ -178,7 +175,7 @@ namespace ArchImgProc
 			for (std::vector<tLineSegment>::const_iterator it = this->lines.cbegin(); it != this->lines.cend(); ++it)
 			{
 				auto index = it - this->lines.cbegin();
-				if (std::find(this->indices.cbegin(), this->indices.cend(), index) == this->indices.cend())
+				if (std::find(this->indices.cbegin(), this->indices.cend(), index) != this->indices.cend())
 				{
 					continue;
 				}

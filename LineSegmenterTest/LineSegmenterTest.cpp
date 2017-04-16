@@ -63,9 +63,61 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		angleMin, angleMax, distMin, distMax, vecIndex);
 
 	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height);
-	refiner.Refine();
+	auto additional = refiner.Refine();
 
+	bool resultUsed = false;
+	auto it = lines.cbegin();
+	CWriteOutData::WriteLineSegmentsAsSvg<float>(
+		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
+	{
+		if (it == lines.cend())
+		{
+		/*	if (resultUsed == true)
+			{
+				return false;
+			}
 
+			x1 = result.pt1.x; y1 = result.pt1.y; x2 = result.pt2.x; y2 = result.pt2.y;
+			color = "green";
+			resultUsed = true;
+			return true;*/
+			return false;
+		}
+
+		size_t idx = std::distance(lines.cbegin(), it);
+		if (std::find(vecIndex.cbegin(),vecIndex.cend(),idx)!= vecIndex.cend())
+		{
+			color = "red";
+		}
+		else
+		{
+			if (std::find(additional.cbegin(), additional.cend(), idx) != additional.cend())
+			{
+				color = "blue";
+			}
+			else
+			{
+				color = "black";
+			}
+		}
+
+		//float angle, distance;
+		//CUtils::ConvertToHessianNormalForm(it->val[0] - centerX, it->val[1] - centerY, it->val[2] - centerX, it->val[3] - centerY, &angle, &distance);
+		//if ((angleMin <= angle&&angleMax >= angle) && (distMin <= distance&&distMax >= distance))
+		//{
+		//	auto idx = std::distance(lines.cbegin(), it);
+		//	color = "red";
+		//}
+
+		x1 = it->val[0]; y1 = it->val[1]; x2 = it->val[2]; y2 = it->val[3];
+
+		++it;
+		return true;
+	},
+		width, height,
+		LR"(W:\test_OCV_3.svg)");
+
+#if false
 	std::vector<size_t>::const_iterator itIndices = vecIndex.cbegin();
 	float angleAverage = CUtils::CalculateAverage<float>(
 		[&](float& v)->bool
@@ -164,6 +216,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	},
 		width, height,
 		LR"(W:\test_OCV_2.svg)");
+#endif
 }
 
 static void TestBitmap2()
