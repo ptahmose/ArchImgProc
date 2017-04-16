@@ -117,6 +117,65 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		width, height,
 		LR"(W:\test_OCV_3.svg)");
 
+	std::vector<size_t> vecIndex2;
+	vecIndex2.reserve(vecIndex.size() + additional.size());
+	std::copy(vecIndex.cbegin(), vecIndex.cend(), std::back_inserter(vecIndex2));
+	std::copy(additional.cbegin(), additional.cend(), std::back_inserter(vecIndex2));
+	
+	CHoughLineRefiner<float, Vec4f> refiner2(lines, vecIndex2, width, height);
+	auto additional2 = refiner2.Refine();
+	resultUsed = false;
+	it = lines.cbegin();
+	CWriteOutData::WriteLineSegmentsAsSvg<float>(
+		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
+	{
+		if (it == lines.cend())
+		{
+			/*	if (resultUsed == true)
+			{
+			return false;
+			}
+
+			x1 = result.pt1.x; y1 = result.pt1.y; x2 = result.pt2.x; y2 = result.pt2.y;
+			color = "green";
+			resultUsed = true;
+			return true;*/
+			return false;
+		}
+
+		size_t idx = std::distance(lines.cbegin(), it);
+		if (std::find(vecIndex2.cbegin(), vecIndex2.cend(), idx) != vecIndex2.cend())
+		{
+			color = "red";
+		}
+		else
+		{
+			if (std::find(additional2.cbegin(), additional2.cend(), idx) != additional2.cend())
+			{
+				color = "blue";
+			}
+			else
+			{
+				color = "black";
+			}
+		}
+
+		//float angle, distance;
+		//CUtils::ConvertToHessianNormalForm(it->val[0] - centerX, it->val[1] - centerY, it->val[2] - centerX, it->val[3] - centerY, &angle, &distance);
+		//if ((angleMin <= angle&&angleMax >= angle) && (distMin <= distance&&distMax >= distance))
+		//{
+		//	auto idx = std::distance(lines.cbegin(), it);
+		//	color = "red";
+		//}
+
+		x1 = it->val[0]; y1 = it->val[1]; x2 = it->val[2]; y2 = it->val[3];
+
+		++it;
+		return true;
+	},
+		width, height,
+		LR"(W:\test_OCV_4.svg)");
+
 #if false
 	std::vector<size_t>::const_iterator itIndices = vecIndex.cbegin();
 	float angleAverage = CUtils::CalculateAverage<float>(
