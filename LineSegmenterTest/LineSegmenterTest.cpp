@@ -25,6 +25,17 @@ static void TestBitmap1()
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(lineSegments.cbegin(), lineSegments.cend(), LR"(W:\test.svg)");
 }
 
+struct OrigLineSegment
+{
+	size_t index;
+	int iteration;
+};
+
+struct RefinedLineSegment
+{
+	float x1, y1, x2, y2;
+};
+
 static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 {
 	float centerX = width / 2;
@@ -63,6 +74,24 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		angleMin, angleMax, distMin, distMax, vecIndex);
 
 	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height);
+	refiner.Refine();
+
+	std::vector<OrigLineSegment> origLineSegments;
+	refiner.EnumOriginalLineSegments(
+		[&](size_t index, int iteration, float x1, float y1, float x2, float y2)->bool
+	{
+		origLineSegments.push_back(OrigLineSegment{ index, iteration });
+		return true;
+	});
+
+	std::vector<RefinedLineSegment> refinedLineSegments;
+	refiner.EnumOriginalLineSegments(
+		[&](float x1, float y1, float x2, float y2)->bool
+	{
+		refinedLineSegments.push_back(RefinedLineSegment{ x1,y1,x2,y2 });
+		return true;
+	});
+#if false
 	auto additional = refiner.Refine();
 
 	bool resultUsed = false;
@@ -72,20 +101,20 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	{
 		if (it == lines.cend())
 		{
-		/*	if (resultUsed == true)
-			{
-				return false;
-			}
+			/*	if (resultUsed == true)
+				{
+					return false;
+				}
 
-			x1 = result.pt1.x; y1 = result.pt1.y; x2 = result.pt2.x; y2 = result.pt2.y;
-			color = "green";
-			resultUsed = true;
-			return true;*/
+				x1 = result.pt1.x; y1 = result.pt1.y; x2 = result.pt2.x; y2 = result.pt2.y;
+				color = "green";
+				resultUsed = true;
+				return true;*/
 			return false;
 		}
 
 		size_t idx = std::distance(lines.cbegin(), it);
-		if (std::find(vecIndex.cbegin(),vecIndex.cend(),idx)!= vecIndex.cend())
+		if (std::find(vecIndex.cbegin(), vecIndex.cend(), idx) != vecIndex.cend())
 		{
 			color = "red";
 		}
@@ -121,7 +150,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	vecIndex2.reserve(vecIndex.size() + additional.size());
 	std::copy(vecIndex.cbegin(), vecIndex.cend(), std::back_inserter(vecIndex2));
 	std::copy(additional.cbegin(), additional.cend(), std::back_inserter(vecIndex2));
-	
+
 	CHoughLineRefiner<float, Vec4f> refiner2(lines, vecIndex2, width, height);
 	auto additional2 = refiner2.Refine();
 	resultUsed = false;
@@ -175,6 +204,8 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 	},
 		width, height,
 		LR"(W:\test_OCV_4.svg)");
+#endif
+
 
 #if false
 	std::vector<size_t>::const_iterator itIndices = vecIndex.cbegin();
@@ -276,7 +307,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		width, height,
 		LR"(W:\test_OCV_2.svg)");
 #endif
-}
+	}
 
 static void TestBitmap2()
 {

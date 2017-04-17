@@ -136,7 +136,19 @@ namespace ArchImgProc
 		};
 	private:
 		const std::vector<tLineSegment>& lines;
-		std::vector<size_t>& indices;
+		std::vector<size_t> indices;
+
+
+		/// <summary>
+		/// For each iteration we store how many elements have been present in the "indices"-vector before the next iteration 
+		/// was run.
+		/// </summary>
+		std::vector<size_t> indicesPerIteration;
+
+		ArchImgProc::Point<float> lineSegmentsStartpoint;
+		ArchImgProc::Vector2<float> lineSegmentsDirectionVector;
+		std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd> lineSegments;
+
 		int width, height;
 		Parameters parameters;
 	public:
@@ -145,26 +157,78 @@ namespace ArchImgProc
 			tFlt x1, y1, x2, y2;
 		};
 	public:
+		void EnumOriginalLineSegments(std::function<bool(size_t index, int iteration, tFlt x1, tFlt y1, tFlt x2, tFlt y2)> func)
+		{
+			size_t iterInd = 0;
+			for (size_t i = 0; i < this->indices.size(); ++i)
+			{
+				if (iterInd < this->indicesPerIteration.size())
+				{
+					if (i >= this->indicesPerIteration[iterInd])
+					{
+						++iterInd;
+					}
+				}
+
+				size_t ind = this->indices[i];
+				bool b = func(ind, (int)iterInd, this->lines[ind].val[0], this->lines[ind].val[1], this->lines[ind].val[2], this->lines[ind].val[3]);
+				if (b != true)
+				{
+					break;
+				}
+			}
+		}
+
+		void EnumOriginalLineSegments(std::function<bool(tFlt x1, tFlt y1, tFlt x2, tFlt y2)> func)
+		{
+			for (size_t i = 0; i < this->lineSegments.size(); ++i)
+			{
+				tFlt x1 = this->lineSegmentsStartpoint.x + this->lineSegments[i].start * this->lineSegmentsDirectionVector.x;
+				tFlt x2 = this->lineSegmentsStartpoint.x + this->lineSegments[i].end * this->lineSegmentsDirectionVector.x;
+				tFlt y1 = this->lineSegmentsStartpoint.y + this->lineSegments[i].start * this->lineSegmentsDirectionVector.y;
+				tFlt y2 = this->lineSegmentsStartpoint.y + this->lineSegments[i].end * this->lineSegmentsDirectionVector.y;
+
+				bool b = func(x1, y1, x2, y2);
+				if (b != true)
+				{
+					break;
+				}
+			}
+		}
+
+	public:
 		CHoughLineRefiner(const std::vector<tLineSegment>& lines, std::vector<size_t>& indices, int width, int height)
 			:lines(lines), indices(indices), width(width), height(height)
 		{
 			this->parameters.SetDefaults();
 		}
 
-		std::vector<size_t> Refine()
+		void Refine()
 		{
-			ArchImgProc::Point<float> p; ArchImgProc::Vector2<float> dir;
-			this->CalcPointAndDirectionVectorByAveragingLineSegments(p, dir);
+			for (;;)
+			{
+				ArchImgProc::Point<float> p; ArchImgProc::Vector2<float> dir;
+				this->CalcPointAndDirectionVectorByAveragingLineSegments(p, dir);
 
-			// create normalized
-			auto linkedSegments = this->CreateLinkedSegments(p, dir);
+				// create normalized
+				auto linkedSegments = this->CreateLinkedSegments(p, dir);
 
-			std::vector<size_t> additionalLineSegments;
-			// line segments in "linkedSegments": p + linkedSegments[i].start * dir , p + linkedSegments[i].end * dir
-			this->SearchLineSegmentsWithAngleInRangeAndDistanceLess(p, dir, linkedSegments, this->parameters.maxAngleDiff, this->parameters.maxDistance,
-				[&](size_t i)->void {additionalLineSegments.push_back(i); });
+				std::vector<size_t> additionalLineSegments;
+				// line segments in "linkedSegments": p + linkedSegments[i].start * dir , p + linkedSegments[i].end * dir
+				this->SearchLineSegmentsWithAngleInRangeAndDistanceLess(p, dir, linkedSegments, this->parameters.maxAngleDiff, this->parameters.maxDistance,
+					[&](size_t i)->void {additionalLineSegments.push_back(i); });
 
-			return additionalLineSegments;
+				if (additionalLineSegments.empty())
+				{
+					this->lineSegmentsStartpoint = p;
+					this->lineSegmentsDirectionVector = dir;
+					this->lineSegments = std::move(linkedSegments);
+					break;
+				}
+
+				this->indicesPerIteration.push_back(this->indices.size());
+				std::copy(additionalLineSegments.cbegin(), additionalLineSegments.cend(), std::back_inserter(this->indices));
+			}
 		}
 
 	private:
@@ -198,7 +262,7 @@ namespace ArchImgProc
 					}
 				}
 
-				tFlt minDistance = this->CalcMinDistance(p,dir, lineStartStop, it->val[0], it->val[1], it->val[2], it->val[3]);
+				tFlt minDistance = this->CalcMinDistance(p, dir, lineStartStop, it->val[0], it->val[1], it->val[2], it->val[3]);
 				////ArchImgProc::Point<float> dummyPt;
 				////tFlt distance = CsgUtils::SegmentSegmentDistanceSquared(
 				////	p.x, p.y, p.x + dir.x, p.y + dir.y,
@@ -223,7 +287,7 @@ namespace ArchImgProc
 				ArchImgProc::Point<tFlt> p2{ p.x + dir.x*lsStartEnd.end,p.y + dir.y*lsStartEnd.end };
 
 				ArchImgProc::Point<float> dummyPt;
-				tFlt distance = sqrt(CsgUtils::SegmentSegmentDistanceSquared(p1.x,p1.y,p2.x,p2.y,x1,y1,x2,y2, dummyPt.x, dummyPt.y));
+				tFlt distance = sqrt(CsgUtils::SegmentSegmentDistanceSquared(p1.x, p1.y, p2.x, p2.y, x1, y1, x2, y2, dummyPt.x, dummyPt.y));
 				if (distance < minDist)
 				{
 					minDist = distance;
