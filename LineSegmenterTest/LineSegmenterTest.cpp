@@ -36,23 +36,8 @@ struct RefinedLineSegment
 	float x1, y1, x2, y2;
 };
 
-static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
+static void WriteHougLines(float length, float angleMin, float angleMax, float distMin, float distMax, const std::vector<Vec4f>& lines, int width, int height,float centerX,float centerY,const std::wstring& filename)
 {
-	float centerX = width / 2;
-	float centerY = height / 2;
-
-	CHoughOnLineSegments<float, size_t> hough(CUtils::CalcDistance(0.f, 0.f, centerX, centerY), 100, 100);
-	for (size_t i = 0; i < lines.size(); ++i)
-	{
-		const auto& l = lines[i];
-		hough.Add(i, l[0] - centerX, l[1] - centerY, l[2] - centerX, l[3] - centerY);
-	}
-
-	hough.Sort();
-
-	float length, angleMin, angleMax, distMin, distMax;
-	hough.GetAngleAndDistanceMaxMinSortedByCount(1, &length, &angleMin, &angleMax, &distMin, &distMax);
-
 	std::vector<size_t> vecIndex;
 	std::vector<Vec4f>::const_iterator iter = lines.cbegin();
 	CHoughOnLineSegments<float, size_t>::FindItemsInRange(
@@ -143,7 +128,128 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		return true;
 	},
 		width, height,
-		LR"(W:\test_OCV_4.svg)");
+		/*LR"(W:\test_OCV_4.svg)")*/filename.c_str());
+}
+
+static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
+{
+	float centerX = width / 2;
+	float centerY = height / 2;
+
+	CHoughOnLineSegments<float, size_t> hough(CUtils::CalcDistance(0.f, 0.f, centerX, centerY), 100, 100);
+	for (size_t i = 0; i < lines.size(); ++i)
+	{
+		const auto& l = lines[i];
+		/*if (i==135)
+			assert(i != 135);*/
+		hough.Add(i, l[0] - centerX, l[1] - centerY, l[2] - centerX, l[3] - centerY);
+	}
+
+	hough.Sort();
+
+	for (int no = 0; no < 10; ++no)
+	{
+		float length, angleMin, angleMax, distMin, distMax;
+		hough.GetAngleAndDistanceMaxMinSortedByCount(no, &length, &angleMin, &angleMax, &distMin, &distMax);
+
+		wstringstream filename;
+		filename << LR"(W:\TestRun_OCV_)"<<no<< LR"(.svg)";
+		float a1 = CUtils::RadToDeg(angleMin);
+		float a2 = CUtils::RadToDeg(angleMax);
+		WriteHougLines(length, angleMin, angleMax, distMin, distMax, lines, width, height, centerX, centerY, filename.str());
+	}
+
+	/*std::vector<size_t> vecIndex;
+	std::vector<Vec4f>::const_iterator iter = lines.cbegin();
+	CHoughOnLineSegments<float, size_t>::FindItemsInRange(
+		[&](size_t& idx, float& x1, float& y1, float& x2, float& y2)->bool
+	{
+		if (iter != lines.cend())
+		{
+			idx = std::distance(lines.cbegin(), iter);
+			x1 = iter->val[0] - centerX;
+			y1 = iter->val[1] - centerY;
+			x2 = iter->val[2] - centerX;
+			y2 = iter->val[3] - centerY;
+			++iter;
+			return true;
+		}
+
+		return false;
+	},
+		angleMin, angleMax, distMin, distMax, vecIndex);
+
+	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height);
+	refiner.Refine();
+
+	std::vector<OrigLineSegment> origLineSegments;
+	refiner.EnumOriginalLineSegments(
+		[&](size_t index, int iteration, float x1, float y1, float x2, float y2)->bool
+	{
+		origLineSegments.push_back(OrigLineSegment{ index, iteration });
+		return true;
+	});
+
+	std::vector<RefinedLineSegment> refinedLineSegments;
+	refiner.EnumOriginalLineSegments(
+		[&](float x1, float y1, float x2, float y2)->bool
+	{
+		refinedLineSegments.push_back(RefinedLineSegment{ x1,y1,x2,y2 });
+		return true;
+	});
+
+	size_t i = 0;
+	CWriteOutData::WriteLineSegmentsAsSvg<float>(
+		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
+	{
+		if (i >= lines.size())
+		{
+			size_t i2 = i - lines.size();
+			if (i2 >= refinedLineSegments.size())
+			{
+				return false;
+			}
+
+			x1 = refinedLineSegments[i2].x1; x2 = refinedLineSegments[i2].x2;
+			y1 = refinedLineSegments[i2].y1; y2 = refinedLineSegments[i2].y2;
+
+			*pStrokewidth = 3;
+			color = "red";
+			++i;
+			return true;
+		}
+
+		auto foundLs = std::find_if(origLineSegments.cbegin(), origLineSegments.cend(), [=](const OrigLineSegment& ols)->bool {return ols.index == i; });
+		if (foundLs == origLineSegments.cend())
+		{
+			color = "black";
+		}
+		else
+		{
+			switch (foundLs->iteration)
+			{
+			case 0:
+				color = "orange";
+				break;
+			case 1:
+				color = "blue";
+				break;
+			case 2:
+				color = "green";
+				break;
+			default:
+				color = "yellow";
+				break;
+			}
+		}
+
+		x1 = lines[i].val[0]; y1 = lines[i].val[1]; x2 = lines[i].val[2]; y2 = lines[i].val[3];
+
+		++i;
+		return true;
+	},
+		width, height,
+		LR"(W:\test_OCV_4.svg)");*/
 
 #if false
 	auto additional = refiner.Refine();

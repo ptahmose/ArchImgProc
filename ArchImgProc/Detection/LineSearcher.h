@@ -157,7 +157,13 @@ namespace ArchImgProc
 			tFlt x1, y1, x2, y2;
 		};
 	public:
-		void EnumOriginalLineSegments(std::function<bool(size_t index, int iteration, tFlt x1, tFlt y1, tFlt x2, tFlt y2)> func)
+		size_t GetOriginalLineSegmentsCount() const { return this->indices.size(); }
+		std::tuple<size_t,int,tFlt,tFlt,tFlt,tFlt> GetOriginalLineSegment(size_t index) const
+		{
+			if (index>=this->GetOriginalLineSegmentsCount())
+		}
+
+		void EnumOriginalLineSegments(std::function<bool(size_t index, int iteration, tFlt x1, tFlt y1, tFlt x2, tFlt y2)> func) const
 		{
 			size_t iterInd = 0;
 			for (size_t i = 0; i < this->indices.size(); ++i)
@@ -325,12 +331,46 @@ namespace ArchImgProc
 		{
 			ArchImgProc::Point<float> p1, p2;
 			this->CalcTwoPointsOnLineByAveragingLineSegments(p1, p2);
+
+			this->CalcTwoPointsByLineFitting(p1, p2);
+
 			// get a unit-vector in direction from p1 to p2
 			dir.x = p2.x - p1.x;
 			dir.y = p2.y - p1.y;
 			auto lengthDir = std::sqrt(dir.x*dir.x + dir.y*dir.y);
 			dir.x /= lengthDir; dir.y /= lengthDir;
 			p = p1;
+		}
+
+		void CalcTwoPointsByLineFitting(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
+		{
+			float a, b;
+			CUtils::LineFit<float>([&](size_t n,float& x,float& y)->bool
+			{
+				size_t idx = n / 2;
+				if (idx >= this->indices.size())
+				{
+					return false;
+				}
+
+				if (n&1)
+				{
+					x = this->lines[this->indices[idx]].val[2];
+					y = this->lines[this->indices[idx]].val[3];
+				}
+				else
+				{
+					x = this->lines[this->indices[idx]].val[0];
+					y = this->lines[this->indices[idx]].val[1];
+				}
+
+				return true;
+			}, &a, &b);
+			
+			p1.x = 0;
+			p1.y = a;
+			p2.x = 10;
+			p2.y = a + b * 10;
 		}
 
 		void CalcTwoPointsOnLineByAveragingLineSegments(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)

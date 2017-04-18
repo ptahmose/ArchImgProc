@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include "csgutils.h"
 #include "utils.h"
 #include "LineSearcher.h"
@@ -72,8 +73,25 @@ namespace ArchImgProc
 
 		void Add(tLsIdx id, tFlt x1, tFlt y1, tFlt x2, tFlt y2)
 		{
+			if (std::fabs(x1-x2)<0.001 && std::fabs(y1 - y2)<0.001)
+			{
+				return;
+			}
+
 			tFlt angle, distance;
-			CalcAngleAndDistance(x1, y2, x2, y2, &angle, &distance);
+			CalcAngleAndDistance(x1, y1, x2, y2, &angle, &distance);
+
+			// normalize angle
+			if (angle< (tFlt)-3.14159265358979323846)
+			{
+				angle += (tFlt)(2 * 3.14159265358979323846);
+			}
+			else if (angle>(tFlt)3.14159265358979323846)
+			{
+				angle -= (tFlt)(2 * 3.14159265358979323846);
+			}
+
+			printf("Angle: %f\n", CUtils::RadToDeg(angle));
 
 			// angle and distance are the parameters of the Hesseian normal form
 			int binIdxX = GetBinIdxFromAngle<float>(angle);
@@ -100,13 +118,15 @@ namespace ArchImgProc
 
 			if (angleMin != nullptr)
 			{
-				float a = (float(x) / this->angleBinsCount/*NumberOfBinsForAngle*/)*1.5*3.14159265358979323846 - 3.14159265358979323846 / 2;
+				//float a = (float(x) / this->angleBinsCount/*NumberOfBinsForAngle*/)*1.5*3.14159265358979323846 - 3.14159265358979323846 / 2;
+				float a = (float(x) / this->angleBinsCount/*NumberOfBinsForAngle*/)*2*3.14159265358979323846 - 3.14159265358979323846 ;
 				*angleMin = a;
 			}
 
 			if (angleMax != nullptr)
 			{
-				float a = (float(x + 1) / this->angleBinsCount/*NumberOfBinsForAngle*/)*1.5*3.14159265358979323846 - 3.14159265358979323846 / 2;
+				//float a = (float(x + 1) / this->angleBinsCount/*NumberOfBinsForAngle*/)*1.5*3.14159265358979323846 - 3.14159265358979323846 / 2;
+				float a = (float(x + 1) / this->angleBinsCount/*NumberOfBinsForAngle*/)*2*3.14159265358979323846 - 3.14159265358979323846 ;
 				*angleMax = a;
 			}
 
@@ -140,6 +160,15 @@ namespace ArchImgProc
 				tFlt angle, distance;
 				CalcAngleAndDistance(x1, y1, x2, y2, &angle, &distance);
 
+				/*if (angle - angleMin > (tFlt)(3.14159265358979323846))
+				{
+					angle -= (tFlt)3.14159265358979323846;
+				}
+				else if (angle - angleMin < -(tFlt)(3.14159265358979323846))
+				{
+					angle += (tFlt)3.14159265358979323846;
+				}*/
+
 				if ((angleMin <= angle&&angleMax >= angle) && (distMin <= distance&&distMax >= distance))
 				{
 					indices.push_back(idx);
@@ -163,9 +192,12 @@ namespace ArchImgProc
 		template <typename tFlt>
 		int GetBinIdxFromAngle(tFlt angle)
 		{
-			typename tFlt v = angle + (tFlt)(3.14159265358979323846 / 2);
-			v = v / (tFlt)(3.14159265358979323846 * 1.5);
+			typename tFlt v = angle + (tFlt)(3.14159265358979323846 );
+			v = v / (tFlt)(3.14159265358979323846 * 2);
 			// v is now in the range 0...1
+			
+			assert(v >= 0 && v <= 1);
+
 			int idx = (int)(v * this->angleBinsCount);
 			if (idx < 0)
 			{

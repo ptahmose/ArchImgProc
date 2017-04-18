@@ -163,5 +163,54 @@ namespace ArchImgProc
 			return r;
 		}
 
+
+		/// <summary>	Fit a linear function y = a + b * x for the specified coordinates. </summary>
+		/// <param name="getData">	[in,out] Information describing the get. </param>
+		/// <param name="a">	  	[in,out] If non-null, the tFloat to process. </param>
+		/// <param name="b">	  	[in,out] If non-null, the tFloat to process. </param>
+		template <typename tFloat>
+		static void LineFit(std::function<bool(size_t, tFloat&, tFloat&)> getData, tFloat* a, tFloat* b, tFloat* totalError=nullptr)
+		{
+			tFloat xS, yS, xyS, xsquaredSum;
+			xS = yS = xyS = xsquaredSum = 0;
+			size_t n = 0;
+			for (;;)
+			{
+				tFloat x, y;
+				if (getData(n, x, y) == false)
+					break;
+
+				xS += x;
+				yS += y;
+				xyS += (x*y);
+				xsquaredSum += (x*x);
+				++n;
+			}
+
+			tFloat r_b = (n*xyS - xS*yS) / (n*xsquaredSum - xS*xS);
+			if (b != nullptr)
+			{
+				*b = r_b;
+			}
+
+			tFloat r_a = (yS - r_b*xS) / n;
+			if (a != nullptr)
+			{
+				*a = r_a;
+			}
+
+			if (totalError != nullptr)
+			{
+				*totalError = 0;
+				for (unsigned i = 0; i < n; ++i)
+				{
+					tFloat x, y;
+					if (getData(i, x, y) == false)
+						break;
+
+					(*totalError) += fabs(y - (r_a + r_b*x));
+				}
+			}
+		}
 	};
 }
