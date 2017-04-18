@@ -350,8 +350,8 @@ namespace ArchImgProc
 			float centerY = height / 2.f;
 
 			std::vector<size_t>::const_iterator itIndices = this->indices.cbegin();
-			avgAngle = CUtils::CalculateAverage<float>(
-				[&](float& v)->bool
+			avgAngle = CUtils::CalculateWeightedAverage<float>(
+				[&](float& v,float& weight)->bool
 			{
 				if (itIndices == this->indices.cend())
 				{
@@ -360,13 +360,16 @@ namespace ArchImgProc
 
 				float angle;
 				CUtils::ConvertToHessianNormalForm(lines[*itIndices].val[0] - centerX, lines[*itIndices].val[1] - centerY, lines[*itIndices].val[2] - centerX, lines[*itIndices].val[3] - centerY, &angle, (float*)nullptr);
+				float dx = (lines[*itIndices].val[0]) - (lines[*itIndices].val[2]);
+				float dy = (lines[*itIndices].val[1]) - (lines[*itIndices].val[3]);
+				weight = std::sqrt(dx*dx + dy*dy);
 				++itIndices;
 				v = angle;
 			});
 
 			itIndices = this->indices.cbegin();
-			avgDistance = CUtils::CalculateAverage<float>(
-				[&](float& v)->bool
+			avgDistance = CUtils::CalculateWeightedAverage<float>(
+				[&](float& v,float& weight)->bool
 			{
 				if (itIndices == this->indices.cend())
 				{
@@ -375,6 +378,11 @@ namespace ArchImgProc
 
 				float distance;
 				CUtils::ConvertToHessianNormalForm(lines[*itIndices].val[0] - centerX, lines[*itIndices].val[1] - centerY, lines[*itIndices].val[2] - centerX, lines[*itIndices].val[3] - centerY, (float*)nullptr, &distance);
+
+				float dx = (lines[*itIndices].val[0]) - (lines[*itIndices].val[2]);
+				float dy = (lines[*itIndices].val[1]) - (lines[*itIndices].val[3]);
+				weight = std::sqrt(dx*dx + dy*dy);
+
 				++itIndices;
 				v = distance;
 			});

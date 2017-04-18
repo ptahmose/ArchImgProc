@@ -91,6 +91,60 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		refinedLineSegments.push_back(RefinedLineSegment{ x1,y1,x2,y2 });
 		return true;
 	});
+
+	size_t i = 0;
+	CWriteOutData::WriteLineSegmentsAsSvg<float>(
+		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
+	{
+		if (i >= lines.size())
+		{
+			size_t i2 = i - lines.size();
+			if (i2 >= refinedLineSegments.size())
+			{
+				return false;
+			}
+
+			x1 = refinedLineSegments[i2].x1; x2 = refinedLineSegments[i2].x2;
+			y1 = refinedLineSegments[i2].y1; y2 = refinedLineSegments[i2].y2;
+
+			*pStrokewidth = 3;
+			color = "red";
+			++i;
+			return true;
+		}
+
+		auto foundLs = std::find_if(origLineSegments.cbegin(), origLineSegments.cend(), [=](const OrigLineSegment& ols)->bool {return ols.index == i; });
+		if (foundLs == origLineSegments.cend())
+		{
+			color = "black";
+		}
+		else
+		{
+			switch (foundLs->iteration)
+			{
+			case 0:
+				color = "orange";
+				break;
+			case 1:
+				color = "blue";
+				break;
+			case 2:
+				color = "green";
+				break;
+			default:
+				color = "yellow";
+				break;
+			}
+		}
+
+		x1 = lines[i].val[0]; y1 = lines[i].val[1]; x2 = lines[i].val[2]; y2 = lines[i].val[3];
+
+		++i;
+		return true;
+	},
+		width, height,
+		LR"(W:\test_OCV_4.svg)");
+
 #if false
 	auto additional = refiner.Refine();
 
@@ -297,15 +351,15 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		{
 			auto idx = std::distance(lines.cbegin(), it);
 			color = "red";
-		}
+	}
 
 		x1 = it->val[0]; y1 = it->val[1]; x2 = it->val[2]; y2 = it->val[3];
 
 		++it;
 		return true;
-	},
-		width, height,
-		LR"(W:\test_OCV_2.svg)");
+},
+width, height,
+LR"(W:\test_OCV_2.svg)");
 #endif
 	}
 

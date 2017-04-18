@@ -117,6 +117,24 @@ namespace ArchImgProc
 			}
 		}
 
+		template<typename tFlt>
+		static tFlt CalculateWeightedAverage(std::function<bool(tFlt& value,tFlt& weight)> getValue)
+		{
+			tFlt sum = 0;
+			tFlt weightSum = 0;
+			tFlt v,w;
+			for (;;)
+			{
+				if (getValue(v,w) == false)
+				{
+					return sum / weightSum;
+				}
+
+				weightSum += w;
+				sum += (v*w);
+			}
+		}
+
 		/// <summary>
 		/// Project point onto the line define by (pt1OnLineX,pt1OnLineY) and (pt2OnLineX,pt1OnLineY). We return a float that gives the factor
 		/// to be multiplied by the vector (pt2OnLine - pt1OnLine) to give the projected point on the line - so
