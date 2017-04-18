@@ -236,7 +236,7 @@ namespace ArchImgProc
 		{
 			tFlt angle = atan(dir.y / dir.x);
 			std::vector<int> candidates;
-			for (std::vector<tLineSegment>::const_iterator it = this->lines.cbegin(); it != this->lines.cend(); ++it)
+			for (typename std::vector<tLineSegment>::const_iterator it = this->lines.cbegin(); it != this->lines.cend(); ++it)
 			{
 				auto index = it - this->lines.cbegin();
 				if (std::find(this->indices.cbegin(), this->indices.cend(), index) != this->indices.cend())
