@@ -147,7 +147,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 
 	hough.Sort();
 
-	for (int no = 0; no < 10; ++no)
+	for (int no = 0; no < 20; ++no)
 	{
 		float length, angleMin, angleMax, distMin, distMax;
 		hough.GetAngleAndDistanceMaxMinSortedByCount(no, &length, &angleMin, &angleMax, &distMin, &distMax);

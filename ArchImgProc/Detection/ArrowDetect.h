@@ -91,7 +91,7 @@ namespace ArchImgProc
 				angle -= (tFlt)(2 * 3.14159265358979323846);
 			}
 
-			printf("Angle: %f\n", CUtils::RadToDeg(angle));
+			//printf("Angle: %f\n", CUtils::RadToDeg(angle));
 
 			// angle and distance are the parameters of the Hesseian normal form
 			int binIdxX = GetBinIdxFromAngle<float>(angle);

@@ -73,7 +73,7 @@ namespace ArchImgProc
 				*pY = tY;
 			}
 
-			if (pVecX!=nullptr)
+			if (pVecX != nullptr)
 			{
 				*pVecX = -tX;
 			}
@@ -118,14 +118,14 @@ namespace ArchImgProc
 		}
 
 		template<typename tFlt>
-		static tFlt CalculateWeightedAverage(std::function<bool(tFlt& value,tFlt& weight)> getValue)
+		static tFlt CalculateWeightedAverage(std::function<bool(tFlt& value, tFlt& weight)> getValue)
 		{
 			tFlt sum = 0;
 			tFlt weightSum = 0;
-			tFlt v,w;
+			tFlt v, w;
 			for (;;)
 			{
-				if (getValue(v,w) == false)
+				if (getValue(v, w) == false)
 				{
 					return sum / weightSum;
 				}
@@ -169,7 +169,7 @@ namespace ArchImgProc
 		/// <param name="a">	  	[in,out] If non-null, the tFloat to process. </param>
 		/// <param name="b">	  	[in,out] If non-null, the tFloat to process. </param>
 		template <typename tFloat>
-		static void LineFit(std::function<bool(size_t, tFloat&, tFloat&)> getData, tFloat* a, tFloat* b, tFloat* totalError=nullptr)
+		static void LineFit(std::function<bool(size_t, tFloat&, tFloat&)> getData, tFloat* a, tFloat* b, tFloat* totalError = nullptr)
 		{
 			tFloat xS, yS, xyS, xsquaredSum;
 			xS = yS = xyS = xsquaredSum = 0;
@@ -210,6 +210,44 @@ namespace ArchImgProc
 
 					(*totalError) += fabs(y - (r_a + r_b*x));
 				}
+			}
+		}
+
+		/// <summary>	Fit a linear function y = a + b * x for the specified coordinates. </summary>
+		/// <param name="getData">	[in,out] Information describing the get. </param>
+		/// <param name="a">	  	[in,out] If non-null, the tFloat to process. </param>
+		/// <param name="b">	  	[in,out] If non-null, the tFloat to process. </param>
+		template <typename tFloat>
+		static void LineFitWeighted(std::function<bool(size_t, tFloat&, tFloat&, tFloat& weight)> getData, tFloat* a, tFloat* b)
+		{
+			tFloat xS, yS, xyS, xsquaredSum;
+			xS = yS = xyS = xsquaredSum = 0;
+			size_t n = 0;
+			tFloat weightSum = 0;
+			for (;;)
+			{
+				tFloat x, y, weight;
+				if (getData(n, x, y, weight) == false)
+					break;
+
+				xS += (x*weight);
+				yS += (y*weight);
+				xyS += (x*y*weight);
+				xsquaredSum += (x*x*weight);
+				++n;
+				weightSum += weight;
+			}
+
+			tFloat r_b = (weightSum*xyS - xS*yS) / (weightSum*xsquaredSum - xS*xS);
+			if (b != nullptr)
+			{
+				*b = r_b;
+			}
+
+			tFloat r_a = (yS - r_b*xS) / weightSum;
+			if (a != nullptr)
+			{
+				*a = r_a;
 			}
 		}
 	};
