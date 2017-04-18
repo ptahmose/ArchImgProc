@@ -332,8 +332,8 @@ namespace ArchImgProc
 			ArchImgProc::Point<float> p1, p2;
 			this->CalcTwoPointsOnLineByAveragingLineSegments(p1, p2);
 
-			this->CalcTwoPointsByLineFitting(p1, p2);
-			this->CalcTwoPointsByLineFittingWeighted(p1, p2);
+			//this->CalcTwoPointsByLineFitting(p1, p2);
+			//this->CalcTwoPointsByLineFittingWeighted(p1, p2);
 
 			this->CalcTwoPointsByLineFitting2Weighted(p1, p2);
 
@@ -438,13 +438,28 @@ namespace ArchImgProc
 				return true;
 			}, a, b, c);
 
-			float bprime = -a / b;
-			float aprime = -c / b;
+			if (std::fabs(b) > std::fabs(a))
+			{
+				// use the formula y =  (-a / b) * x + (-c / b)
+				float bprime = -a / b;
+				float aprime = -c / b;
 
-			p1.x = 0;
-			p1.y = aprime;
-			p2.x = 10;
-			p2.y = aprime + bprime * 10;
+				p1.x = 0;
+				p1.y = aprime;
+				p2.x = 10;
+				p2.y = aprime + bprime * 10;
+			}
+			else
+			{
+				// use the formula x = (-b / a) * y + (-c / a)
+				float bprime = -b / a;
+				float aprime = -c / a;
+
+				p1.x = aprime;
+				p1.y = 0;
+				p2.x = aprime + bprime * 10;
+				p2.y = 10;
+			}
 		}
 
 
