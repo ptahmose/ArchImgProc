@@ -250,5 +250,52 @@ namespace ArchImgProc
 				*a = r_a;
 			}
 		}
+
+		/// <summary>	Fit a linear function 0 = a * x + b * y + c for the specified coordinates. </summary>
+		template <typename tFloat>
+		static void LineFit2Weighted(std::function<bool(size_t, tFloat&, tFloat&, tFloat& weight)> getData, tFloat& a, tFloat& b, tFloat& c)
+		{
+			tFloat xS, yS, xyS, xsquaredSum, ysquaredSum;
+			xS = yS = xyS = xsquaredSum = ysquaredSum = 0;
+			size_t n = 0;
+			tFloat weightSum = 0;
+			for (;;)
+			{
+				tFloat x, y, weight;
+				if (getData(n, x, y, weight) == false)
+					break;
+
+				xS += (x*weight);
+				yS += (y*weight);
+				xyS += (x*y*weight);
+				xsquaredSum += (x*x*weight);
+				ysquaredSum += (y*y*weight);
+				++n;
+				weightSum += weight;
+			}
+
+			xS /= weightSum;
+			yS /= weightSum;
+			xyS /= weightSum;
+			xsquaredSum /= weightSum;
+			ysquaredSum /= weightSum;
+
+			a = -(xyS - xS*yS);
+			tFloat bX = xsquaredSum - xS*xS;
+			tFloat bY = ysquaredSum - yS*yS;
+
+			if (fabs(bX) < fabs(bY)) //!< Test verticality/horizontality
+			{ // Line is more Vertical.
+				b = bY;
+				std::swap(a, b);
+			}
+			else
+			{   // Line is more Horizontal.
+				// Classical solution, when we expect more horizontal-like line
+				b = bX;
+			}
+
+			c = -(a * xS + b * yS);
+		}
 	};
 }

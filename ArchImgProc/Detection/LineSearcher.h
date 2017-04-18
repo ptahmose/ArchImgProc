@@ -158,9 +158,9 @@ namespace ArchImgProc
 		};
 	public:
 		size_t GetOriginalLineSegmentsCount() const { return this->indices.size(); }
-		std::tuple<size_t,int,tFlt,tFlt,tFlt,tFlt> GetOriginalLineSegment(size_t index) const
+		std::tuple<size_t, int, tFlt, tFlt, tFlt, tFlt> GetOriginalLineSegment(size_t index) const
 		{
-			if (index>=this->GetOriginalLineSegmentsCount())
+			if (index >= this->GetOriginalLineSegmentsCount())
 		}
 
 		void EnumOriginalLineSegments(std::function<bool(size_t index, int iteration, tFlt x1, tFlt y1, tFlt x2, tFlt y2)> func) const
@@ -335,6 +335,8 @@ namespace ArchImgProc
 			this->CalcTwoPointsByLineFitting(p1, p2);
 			this->CalcTwoPointsByLineFittingWeighted(p1, p2);
 
+			this->CalcTwoPointsByLineFitting2Weighted(p1, p2);
+
 			// get a unit-vector in direction from p1 to p2
 			dir.x = p2.x - p1.x;
 			dir.y = p2.y - p1.y;
@@ -346,7 +348,7 @@ namespace ArchImgProc
 		void CalcTwoPointsByLineFitting(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
 		{
 			float a, b;
-			CUtils::LineFit<float>([&](size_t n,float& x,float& y)->bool
+			CUtils::LineFit<float>([&](size_t n, float& x, float& y)->bool
 			{
 				size_t idx = n / 2;
 				if (idx >= this->indices.size())
@@ -354,7 +356,7 @@ namespace ArchImgProc
 					return false;
 				}
 
-				if (n&1)
+				if (n & 1)
 				{
 					x = this->lines[this->indices[idx]].val[2];
 					y = this->lines[this->indices[idx]].val[3];
@@ -367,7 +369,7 @@ namespace ArchImgProc
 
 				return true;
 			}, &a, &b);
-			
+
 			p1.x = 0;
 			p1.y = a;
 			p2.x = 10;
@@ -377,7 +379,7 @@ namespace ArchImgProc
 		void CalcTwoPointsByLineFittingWeighted(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
 		{
 			float a, b;
-			CUtils::LineFitWeighted<float>([&](size_t n, float& x, float& y,float& weight)->bool
+			CUtils::LineFitWeighted<float>([&](size_t n, float& x, float& y, float& weight)->bool
 			{
 				size_t idx = n / 2;
 				if (idx >= this->indices.size())
@@ -408,6 +410,44 @@ namespace ArchImgProc
 			p2.y = a + b * 10;
 		}
 
+		void CalcTwoPointsByLineFitting2Weighted(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
+		{
+			float a, b, c;
+			CUtils::LineFit2Weighted<float>([&](size_t n, float& x, float& y, float& weight)->bool
+			{
+				size_t idx = n / 2;
+				if (idx >= this->indices.size())
+				{
+					return false;
+				}
+
+				float dx = this->lines[this->indices[idx]].val[0] - this->lines[this->indices[idx]].val[2];
+				float dy = this->lines[this->indices[idx]].val[1] - this->lines[this->indices[idx]].val[3];
+				weight = std::sqrt(dx*dx + dy*dy);
+				if (n & 1)
+				{
+					x = this->lines[this->indices[idx]].val[2];
+					y = this->lines[this->indices[idx]].val[3];
+				}
+				else
+				{
+					x = this->lines[this->indices[idx]].val[0];
+					y = this->lines[this->indices[idx]].val[1];
+				}
+
+				return true;
+			}, a, b, c);
+
+			float bprime = -a / b;
+			float aprime = -c / b;
+
+			p1.x = 0;
+			p1.y = aprime;
+			p2.x = 10;
+			p2.y = aprime + bprime * 10;
+		}
+
+
 		void CalcTwoPointsOnLineByAveragingLineSegments(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
 		{
 			float avgAngle, avgDistance;
@@ -426,7 +466,7 @@ namespace ArchImgProc
 
 			std::vector<size_t>::const_iterator itIndices = this->indices.cbegin();
 			avgAngle = CUtils::CalculateWeightedAverage<float>(
-				[&](float& v,float& weight)->bool
+				[&](float& v, float& weight)->bool
 			{
 				if (itIndices == this->indices.cend())
 				{
@@ -444,7 +484,7 @@ namespace ArchImgProc
 
 			itIndices = this->indices.cbegin();
 			avgDistance = CUtils::CalculateWeightedAverage<float>(
-				[&](float& v,float& weight)->bool
+				[&](float& v, float& weight)->bool
 			{
 				if (itIndices == this->indices.cend())
 				{
