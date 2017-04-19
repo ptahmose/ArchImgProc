@@ -125,7 +125,7 @@ namespace ArchImgProc
 		const cv::Vec4f& vec4;
 	public:
 		explicit GetPointsFromCvVec4f(const cv::Vec4f& vec4) :vec4(vec4) {}
-		//~GetPointsFromCvVec4f() = delete;
+		GetPointsFromCvVec4f() = delete;
 		cv::Vec4f::value_type x1() const { return this->vec4.val[0]; }
 		cv::Vec4f::value_type y1() const { return this->vec4.val[1]; }
 		cv::Vec4f::value_type x2() const { return this->vec4.val[2]; }
@@ -257,7 +257,7 @@ namespace ArchImgProc
 				}
 
 				size_t ind = this->indices[i];
-				tGetPointsFromLineSegment getVal(this->lines[ind]);
+				tGetPointsFromLineSegment getVal{ this->lines[ind] };
 				bool b = func(ind, (int)iterInd, getVal.x1(), getVal.y1(), getVal.x2(), getVal.y2());
 				if (b != true)
 				{
