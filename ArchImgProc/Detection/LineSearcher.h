@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits> 
+#include <opencv2/core/matx.hpp>
 
 namespace ArchImgProc
 {
@@ -118,7 +119,20 @@ namespace ArchImgProc
 		}
 	};
 
-	template <typename tFlt, typename tLineSegment>
+	class GetPointsFromCvVec4f
+	{
+	private:
+		const cv::Vec4f& vec4;
+	public:
+		explicit GetPointsFromCvVec4f(const cv::Vec4f& vec4) :vec4(vec4) {}
+		//~GetPointsFromCvVec4f() = delete;
+		cv::Vec4f::value_type x1() const { return this->vec4.val[0]; }
+		cv::Vec4f::value_type y1() const { return this->vec4.val[1]; }
+		cv::Vec4f::value_type x2() const { return this->vec4.val[2]; }
+		cv::Vec4f::value_type y2() const { return this->vec4.val[3]; }
+	};
+
+	template <typename tFlt, typename tLineSegment, typename tGetPointsFromLineSegment = GetPointsFromCvVec4f>
 	class CHoughLineRefiner
 	{
 	public:
@@ -156,11 +170,77 @@ namespace ArchImgProc
 		{
 			tFlt x1, y1, x2, y2;
 		};
+
+		struct OriginalLineSegment
+		{
+			size_t index;
+			int iteration;
+			ArchImgProc::Point<float> p1, p2;
+		};
+
+		struct ResultLineSegment
+		{
+			ArchImgProc::Point<float> p1, p2;
+		};
 	public:
 		size_t GetOriginalLineSegmentsCount() const { return this->indices.size(); }
-		std::tuple<size_t, int, tFlt, tFlt, tFlt, tFlt> GetOriginalLineSegment(size_t index) const
+		bool GetOriginalLineSegment(size_t index, OriginalLineSegment* pOut) const
 		{
 			if (index >= this->GetOriginalLineSegmentsCount())
+			{
+				return false;
+			}
+
+			if (pOut != nullptr)
+			{
+				pOut->index = this->indices[index];
+				pOut->iteration = 0;
+				for (auto it = this->indicesPerIteration.cbegin(); it != this->indicesPerIteration.cend(); ++it)
+				{
+					if (*it < index)
+					{
+						++(pOut->iteration);
+					}
+					else
+						break;
+				}
+
+				tGetPointsFromLineSegment getVal(this->lines[pOut->index]);
+				pOut->p1.x = getVal.x1();
+				pOut->p1.y = getVal.y1();
+				pOut->p2.x = getVal.x2();
+				pOut->p2.y = getVal.y2();
+				//pOut.p1.x = this->lines[pOut->index].val[0];
+				//pOut.p1.y = this->lines[pOut->index].val[1];
+				//pOut.p2.x = this->lines[pOut->index].val[2];
+				//pOut.p2.y = this->lines[pOut->index].val[3];
+			}
+
+			return true;
+		}
+
+		size_t GetResultLineSegmentsCount() const
+		{
+			return this->lineSegments.size();
+		}
+
+		bool GetResultLineSegment(size_t index, ResultLineSegment* pOut)const
+		{
+			if (index >= this->GetResultLineSegmentsCount())
+			{
+				return false;
+			}
+
+			if (pOut != nullptr)
+			{
+				auto ptrLs = this->lineSegments.data() + index;
+				pOut->p1.x = this->lineSegmentsStartpoint.x + ptrLs->start * this->lineSegmentsDirectionVector.x;
+				pOut->p2.x = this->lineSegmentsStartpoint.x + ptrLs->end * this->lineSegmentsDirectionVector.x;
+				pOut->p1.y = this->lineSegmentsStartpoint.y + ptrLs->start * this->lineSegmentsDirectionVector.y;
+				pOut->p2.y = this->lineSegmentsStartpoint.y + ptrLs->end * this->lineSegmentsDirectionVector.y;
+			}
+
+			return true;
 		}
 
 		void EnumOriginalLineSegments(std::function<bool(size_t index, int iteration, tFlt x1, tFlt y1, tFlt x2, tFlt y2)> func) const
@@ -177,7 +257,8 @@ namespace ArchImgProc
 				}
 
 				size_t ind = this->indices[i];
-				bool b = func(ind, (int)iterInd, this->lines[ind].val[0], this->lines[ind].val[1], this->lines[ind].val[2], this->lines[ind].val[3]);
+				tGetPointsFromLineSegment getVal(this->lines[ind]);
+				bool b = func(ind, (int)iterInd, getVal.x1(), getVal.y1(), getVal.x2(), getVal.y2());
 				if (b != true)
 				{
 					break;
@@ -250,7 +331,9 @@ namespace ArchImgProc
 					continue;
 				}
 
-				tFlt angleOfSegment = atan((it->val[1] - it->val[3]) / (it->val[0] - it->val[2]));
+				tGetPointsFromLineSegment getVal(*it);
+				//tFlt angleOfSegment = atan((it->val[1] - it->val[3]) / (it->val[0] - it->val[2]));
+				tFlt angleOfSegment = atan((getVal.y1() - getVal.y2()) / (getVal.x1() - getVal.x2()));
 				if (abs(angleOfSegment - angle) > this->parameters.maxAngleDiff)
 				{
 					if (angleOfSegment > angle)
@@ -268,7 +351,8 @@ namespace ArchImgProc
 					}
 				}
 
-				tFlt minDistance = this->CalcMinDistance(p, dir, lineStartStop, it->val[0], it->val[1], it->val[2], it->val[3]);
+				//tFlt minDistance = this->CalcMinDistance(p, dir, lineStartStop, it->val[0], it->val[1], it->val[2], it->val[3]);
+				tFlt minDistance = this->CalcMinDistance(p, dir, lineStartStop, getVal.x1(), getVal.y1(), getVal.x2(), getVal.y2());
 				////ArchImgProc::Point<float> dummyPt;
 				////tFlt distance = CsgUtils::SegmentSegmentDistanceSquared(
 				////	p.x, p.y, p.x + dir.x, p.y + dir.y,
@@ -293,7 +377,7 @@ namespace ArchImgProc
 				ArchImgProc::Point<tFlt> p2{ p.x + dir.x*lsStartEnd.end,p.y + dir.y*lsStartEnd.end };
 
 				ArchImgProc::Point<float> dummyPt;
-				tFlt distance = sqrt(CsgUtils::SegmentSegmentDistanceSquared(p1.x, p1.y, p2.x, p2.y, x1, y1, x2, y2, dummyPt.x, dummyPt.y));
+				tFlt distance = std::sqrt(CsgUtils::SegmentSegmentDistanceSquared(p1.x, p1.y, p2.x, p2.y, x1, y1, x2, y2, dummyPt.x, dummyPt.y));
 				if (distance < minDist)
 				{
 					minDist = distance;
@@ -315,8 +399,11 @@ namespace ArchImgProc
 					return false;
 				}
 
-				p1Ls = ArchImgProc::Point<float>{ this->lines[*itIndices].val[0], this->lines[*itIndices].val[1] };
-				p2LS = ArchImgProc::Point<float>{ this->lines[*itIndices].val[2] , this->lines[*itIndices].val[3] };
+				tGetPointsFromLineSegment getVal(this->lines[*itIndices]);
+				p1Ls = ArchImgProc::Point<float>{ getVal.x1(), getVal.y1() };
+				p2LS = ArchImgProc::Point<float>{ getVal.x2(), getVal.y2() };
+				/*p1Ls = ArchImgProc::Point<float>{ this->lines[*itIndices].val[0], this->lines[*itIndices].val[1] };
+				p2LS = ArchImgProc::Point<float>{ this->lines[*itIndices].val[2] , this->lines[*itIndices].val[3] };*/
 				++itIndices;
 				return true;
 			});
@@ -330,7 +417,7 @@ namespace ArchImgProc
 		void CalcPointAndDirectionVectorByAveragingLineSegments(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float>& dir)
 		{
 			ArchImgProc::Point<float> p1, p2;
-			this->CalcTwoPointsOnLineByAveragingLineSegments(p1, p2);
+			//this->CalcTwoPointsOnLineByAveragingLineSegments(p1, p2);
 
 			//this->CalcTwoPointsByLineFitting(p1, p2);
 			//this->CalcTwoPointsByLineFittingWeighted(p1, p2);
@@ -345,38 +432,38 @@ namespace ArchImgProc
 			p = p1;
 		}
 
-		void CalcTwoPointsByLineFitting(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
-		{
-			float a, b;
-			CUtils::LineFit<float>([&](size_t n, float& x, float& y)->bool
-			{
-				size_t idx = n / 2;
-				if (idx >= this->indices.size())
-				{
-					return false;
-				}
+		///*void CalcTwoPointsByLineFitting(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
+		//{
+		//	float a, b;
+		//	CUtils::LineFit<float>([&](size_t n, float& x, float& y)->bool
+		//	{
+		//		size_t idx = n / 2;
+		//		if (idx >= this->indices.size())
+		//		{
+		//			return false;
+		//		}
 
-				if (n & 1)
-				{
-					x = this->lines[this->indices[idx]].val[2];
-					y = this->lines[this->indices[idx]].val[3];
-				}
-				else
-				{
-					x = this->lines[this->indices[idx]].val[0];
-					y = this->lines[this->indices[idx]].val[1];
-				}
+		//		if (n & 1)
+		//		{
+		//			x = this->lines[this->indices[idx]].val[2];
+		//			y = this->lines[this->indices[idx]].val[3];
+		//		}
+		//		else
+		//		{
+		//			x = this->lines[this->indices[idx]].val[0];
+		//			y = this->lines[this->indices[idx]].val[1];
+		//		}
 
-				return true;
-			}, &a, &b);
+		//		return true;
+		//	}, &a, &b);
 
-			p1.x = 0;
-			p1.y = a;
-			p2.x = 10;
-			p2.y = a + b * 10;
-		}
+		//	p1.x = 0;
+		//	p1.y = a;
+		//	p2.x = 10;
+		//	p2.y = a + b * 10;
+		//}*/
 
-		void CalcTwoPointsByLineFittingWeighted(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
+		/*void CalcTwoPointsByLineFittingWeighted(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
 		{
 			float a, b;
 			CUtils::LineFitWeighted<float>([&](size_t n, float& x, float& y, float& weight)->bool
@@ -408,11 +495,12 @@ namespace ArchImgProc
 			p1.y = a;
 			p2.x = 10;
 			p2.y = a + b * 10;
-		}
+		}*/
 
 		void CalcTwoPointsByLineFitting2Weighted(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
 		{
 			float a, b, c;
+			float curWeight;
 			CUtils::LineFit2Weighted<float>([&](size_t n, float& x, float& y, float& weight)->bool
 			{
 				size_t idx = n / 2;
@@ -421,18 +509,28 @@ namespace ArchImgProc
 					return false;
 				}
 
-				float dx = this->lines[this->indices[idx]].val[0] - this->lines[this->indices[idx]].val[2];
-				float dy = this->lines[this->indices[idx]].val[1] - this->lines[this->indices[idx]].val[3];
-				weight = std::sqrt(dx*dx + dy*dy);
+				size_t idxIntoLines = this->indices[idx];
+				tGetPointsFromLineSegment getVal(this->lines[idxIntoLines]);
 				if (n & 1)
 				{
-					x = this->lines[this->indices[idx]].val[2];
-					y = this->lines[this->indices[idx]].val[3];
+					//x = this->lines[idxIntoLines].val[2];
+					x = getVal.x2();
+					//y = this->lines[idxIntoLines].val[3];
+					y = getVal.y2();
+					weight = curWeight;
 				}
 				else
 				{
-					x = this->lines[this->indices[idx]].val[0];
-					y = this->lines[this->indices[idx]].val[1];
+					auto dx = getVal.x1() - getVal.x2();// this->lines[idxIntoLines].val[0] - this->lines[idxIntoLines].val[2];
+					auto dy = getVal.y1() - getVal.y2();//this->lines[idxIntoLines].val[1] - this->lines[idxIntoLines].val[3];
+					weight = std::sqrt(dx*dx + dy*dy);
+
+					// Since we use the same weight on both points of a linesegment, we store the value (with the first point of 
+					// a line segment) so that we do not have to re-calculate for the second point.
+					// Note that we require that the counter ("n") starts with 0 and is consecutive.
+					curWeight = weight;
+					x = getVal.x1();// this->lines[idxIntoLines].val[0];
+					y = getVal.y1(); //this->lines[idxIntoLines].val[1];
 				}
 
 				return true;
@@ -463,7 +561,7 @@ namespace ArchImgProc
 		}
 
 
-		void CalcTwoPointsOnLineByAveragingLineSegments(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
+		/*void CalcTwoPointsOnLineByAveragingLineSegments(ArchImgProc::Point<float>& p1, ArchImgProc::Point<float>& p2)
 		{
 			float avgAngle, avgDistance;
 			this->CalcAverageAngleAndDistance(avgAngle, avgDistance);
@@ -516,6 +614,6 @@ namespace ArchImgProc
 				++itIndices;
 				v = distance;
 			});
-		}
+		}*/
 	};
 }
