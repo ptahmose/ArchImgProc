@@ -25,16 +25,16 @@ static void TestBitmap1()
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(lineSegments.cbegin(), lineSegments.cend(), LR"(W:\test.svg)");
 }
 
-struct OrigLineSegment
-{
-	size_t index;
-	int iteration;
-};
-
-struct RefinedLineSegment
-{
-	float x1, y1, x2, y2;
-};
+//struct OrigLineSegment
+//{
+//	size_t index;
+//	int iteration;
+//};
+//
+//struct RefinedLineSegment
+//{
+//	float x1, y1, x2, y2;
+//};
 
 static void WriteHougLines(float length, float angleMin, float angleMax, float distMin, float distMax, const std::vector<Vec4f>& lines, int width, int height, float centerX, float centerY, const std::wstring& filename)
 {
@@ -61,7 +61,7 @@ static void WriteHougLines(float length, float angleMin, float angleMax, float d
 	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height);
 	refiner.Refine();
 
-	size_t i = 0; int mode = 0;
+	size_t i = 0; 
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(
 		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
 	{
