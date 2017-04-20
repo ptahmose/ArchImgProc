@@ -14,6 +14,12 @@ namespace ArchImgProc
 			tFlt start, end;
 		};
 
+		struct LineSegmentStartEndWithIndices
+		{
+			LineSegmentStartEnd startEnd;
+			std::vector<size_t> indices;
+		};
+
 		static std::vector<LineSegmentStartEnd> CreateLineSegmentsStartStop(
 			const ArchImgProc::Point<tFlt>& lineToProjectP1,
 			const ArchImgProc::Point<tFlt>& lineToProjectP2,
@@ -50,12 +56,58 @@ namespace ArchImgProc
 			return result;
 		}
 
+		static std::vector<LineSegmentStartEndWithIndices> CreateLineSegmentsStartStopIndex(
+			const ArchImgProc::Point<tFlt>& lineToProjectP1,
+			const ArchImgProc::Point<tFlt>& lineToProjectP2,
+			std::function<bool(ArchImgProc::Point<tFlt>& p1, ArchImgProc::Point<tFlt>& p2, size_t& index)> getPoints)
+		{
+			std::vector<LineSegmentStartEndWithIndices> result;
+			for (;;)
+			{
+				ArchImgProc::Point<tFlt> p1, p2; size_t index;
+				bool b = getPoints(p1, p2, index);
+				if (b == false)
+				{
+					break;
+				}
+
+				auto l1 = CUtils::ProjectPointOntoLine(p1.x, p1.y, lineToProjectP1.x, lineToProjectP1.y, lineToProjectP2.x, lineToProjectP2.y);
+				auto l2 = CUtils::ProjectPointOntoLine(p2.x, p2.y, lineToProjectP1.x, lineToProjectP1.y, lineToProjectP2.x, lineToProjectP2.y);
+
+				LineSegmentStartEndWithIndices lsStartEndIndex;
+				lsStartEndIndex.indices.push_back(index);
+				if (l1 < l2)
+				{
+					lsStartEndIndex.startEnd.start = l1;
+					lsStartEndIndex.startEnd.end = l2;
+				}
+				else
+				{
+					lsStartEndIndex.startEnd.start = l2;
+					lsStartEndIndex.startEnd.end = l1;
+				}
+
+				result.push_back(lsStartEndIndex);
+			}
+
+			return result;
+		}
+
 		static void Sort(std::vector<LineSegmentStartEnd>& v)
 		{
 			std::sort(v.begin(), v.end(),
 				[](const LineSegmentStartEnd & a, const LineSegmentStartEnd & b) -> bool
 			{
 				return a.start < b.start;
+			});
+		}
+
+		static void Sort(std::vector<LineSegmentStartEndWithIndices>& v)
+		{
+			std::sort(v.begin(), v.end(),
+				[](const LineSegmentStartEndWithIndices & a, const LineSegmentStartEndWithIndices & b) -> bool
+			{
+				return a.startEnd.start < b.startEnd.start;
 			});
 		}
 
@@ -88,6 +140,36 @@ namespace ArchImgProc
 			return result;
 		}
 
+		static std::vector<LineSegmentStartEndWithIndices> LinkOverlapping(const std::vector<LineSegmentStartEndWithIndices>& v)
+		{
+			if (v.size() < 2)
+			{
+				// create a copy and return it
+				return std::vector<LineSegmentStartEndWithIndices>(v);
+			}
+
+			std::vector<LineSegmentStartEndWithIndices> result;
+			typename std::vector<LineSegmentStartEndWithIndices>::const_iterator it = v.begin();
+			LineSegmentStartEndWithIndices cur = *it;
+			++it;
+			for (; it != v.end(); ++it)
+			{
+				if (cur.startEnd.end >= it->startEnd.start)
+				{
+					cur.startEnd.end = (std::max)(cur.startEnd.end, it->startEnd.end);
+					std::copy(it->indices.cbegin(), it->indices.cend(), std::back_inserter(cur.indices));
+				}
+				else
+				{
+					result.push_back(cur);
+					cur = *it;
+				}
+			}
+
+			result.push_back(cur);
+			return result;
+		}
+
 		static std::vector<LineSegmentStartEnd> LinkSmallGaps(const std::vector<LineSegmentStartEnd>& v, tFlt maxGap)
 		{
 			if (v.size() < 2)
@@ -105,6 +187,37 @@ namespace ArchImgProc
 				if ((cur.end + maxGap) >= it->start)
 				{
 					cur.end = (std::max)(cur.end, it->end);
+				}
+				else
+				{
+					result.push_back(cur);
+					cur = *it;
+				}
+			}
+
+			result.push_back(cur);
+			return result;
+
+		}
+
+		static std::vector<LineSegmentStartEndWithIndices> LinkSmallGaps(const std::vector<LineSegmentStartEndWithIndices>& v, tFlt maxGap)
+		{
+			if (v.size() < 2)
+			{
+				// create a copy and return it
+				return std::vector<LineSegmentStartEndWithIndices>(v);
+			}
+
+			std::vector<LineSegmentStartEndWithIndices> result;
+			typename std::vector<LineSegmentStartEndWithIndices>::const_iterator it = v.begin();
+			LineSegmentStartEndWithIndices cur = *it;
+			++it;
+			for (; it != v.end(); ++it)
+			{
+				if ((cur.startEnd.end + maxGap) >= it->startEnd.start)
+				{
+					cur.startEnd.end = (std::max)(cur.startEnd.end, it->startEnd.end);
+					std::copy(it->indices.cbegin(), it->indices.cend(), std::back_inserter(cur.indices));
 				}
 				else
 				{
@@ -161,7 +274,7 @@ namespace ArchImgProc
 
 		ArchImgProc::Point<float> lineSegmentsStartpoint;
 		ArchImgProc::Vector2<float> lineSegmentsDirectionVector;
-		std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd> lineSegments;
+		std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices> lineSegments;
 
 		int width, height;
 		Parameters parameters;
@@ -181,6 +294,7 @@ namespace ArchImgProc
 		struct ResultLineSegment
 		{
 			ArchImgProc::Point<float> p1, p2;
+			std::vector<size_t> origIndices;
 		};
 	public:
 		size_t GetOriginalLineSegmentsCount() const { return this->indices.size(); }
@@ -234,10 +348,10 @@ namespace ArchImgProc
 			if (pOut != nullptr)
 			{
 				auto ptrLs = this->lineSegments.data() + index;
-				pOut->p1.x = this->lineSegmentsStartpoint.x + ptrLs->start * this->lineSegmentsDirectionVector.x;
-				pOut->p2.x = this->lineSegmentsStartpoint.x + ptrLs->end * this->lineSegmentsDirectionVector.x;
-				pOut->p1.y = this->lineSegmentsStartpoint.y + ptrLs->start * this->lineSegmentsDirectionVector.y;
-				pOut->p2.y = this->lineSegmentsStartpoint.y + ptrLs->end * this->lineSegmentsDirectionVector.y;
+				pOut->p1.x = this->lineSegmentsStartpoint.x + ptrLs->startEnd.start * this->lineSegmentsDirectionVector.x;
+				pOut->p2.x = this->lineSegmentsStartpoint.x + ptrLs->startEnd.end * this->lineSegmentsDirectionVector.x;
+				pOut->p1.y = this->lineSegmentsStartpoint.y + ptrLs->startEnd.start * this->lineSegmentsDirectionVector.y;
+				pOut->p2.y = this->lineSegmentsStartpoint.y + ptrLs->startEnd.end * this->lineSegmentsDirectionVector.y;
 			}
 
 			return true;
@@ -387,12 +501,79 @@ namespace ArchImgProc
 			return minDist;
 		}
 
+		void SearchLineSegmentsWithAngleInRangeAndDistanceLess(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float> dir, const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& lineStartStop, float maxAngleDiff, float maxDistance, std::function<void(size_t)> addLineSegment)
+		{
+			tFlt angle = atan(dir.y / dir.x);
+			std::vector<int> candidates;
+			for (typename std::vector<tLineSegment>::const_iterator it = this->lines.cbegin(); it != this->lines.cend(); ++it)
+			{
+				auto index = it - this->lines.cbegin();
+				if (std::find(this->indices.cbegin(), this->indices.cend(), index) != this->indices.cend())
+				{
+					continue;
+				}
 
-		std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd> CreateLinkedSegments(const ArchImgProc::Point<float>& point, const ArchImgProc::Vector2<float>& normalizedDir)
+				tGetPointsFromLineSegment getVal(*it);
+				//tFlt angleOfSegment = atan((it->val[1] - it->val[3]) / (it->val[0] - it->val[2]));
+				tFlt angleOfSegment = atan((getVal.y1() - getVal.y2()) / (getVal.x1() - getVal.x2()));
+				if (abs(angleOfSegment - angle) > this->parameters.maxAngleDiff)
+				{
+					if (angleOfSegment > angle)
+					{
+						angleOfSegment -= (tFlt)3.14159265358979323846;
+					}
+					else
+					{
+						angle -= (tFlt)3.14159265358979323846;
+					}
+
+					if (abs(angleOfSegment - angle) > this->parameters.maxAngleDiff)
+					{
+						continue;
+					}
+				}
+
+				//tFlt minDistance = this->CalcMinDistance(p, dir, lineStartStop, it->val[0], it->val[1], it->val[2], it->val[3]);
+				tFlt minDistance = this->CalcMinDistance(p, dir, lineStartStop, getVal.x1(), getVal.y1(), getVal.x2(), getVal.y2());
+				////ArchImgProc::Point<float> dummyPt;
+				////tFlt distance = CsgUtils::SegmentSegmentDistanceSquared(
+				////	p.x, p.y, p.x + dir.x, p.y + dir.y,
+				////	it->val[0], it->val[1], it->val[2], it->val[3], dummyPt.x, dummyPt.y);
+				////distance = sqrt(distance);
+				if (minDistance > this->parameters.maxDistance)
+				{
+					continue;
+				}
+
+				addLineSegment(index);
+			}
+		}
+
+		tFlt CalcMinDistance(const ArchImgProc::Point<float>& p, const  ArchImgProc::Vector2<float> dir, const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& lineStartStop,
+			tFlt x1, tFlt y1, tFlt x2, tFlt y2)
+		{
+			tFlt minDist = (std::numeric_limits<tFlt>::max)();
+			for (const auto lsStartEnd : lineStartStop)
+			{
+				ArchImgProc::Point<tFlt> p1{ p.x + dir.x*lsStartEnd.startEnd.start,p.y + dir.y*lsStartEnd.startEnd.start };
+				ArchImgProc::Point<tFlt> p2{ p.x + dir.x*lsStartEnd.startEnd.end,p.y + dir.y*lsStartEnd.startEnd.end };
+
+				ArchImgProc::Point<float> dummyPt;
+				tFlt distance = std::sqrt(CsgUtils::SegmentSegmentDistanceSquared(p1.x, p1.y, p2.x, p2.y, x1, y1, x2, y2, dummyPt.x, dummyPt.y));
+				if (distance < minDist)
+				{
+					minDist = distance;
+				}
+			}
+
+			return minDist;
+		}
+
+		std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices> CreateLinkedSegments(const ArchImgProc::Point<float>& point, const ArchImgProc::Vector2<float>& normalizedDir)
 		{
 			auto itIndices = this->indices.cbegin();
-			auto lsStartStop = CLineSearcher<float>::CreateLineSegmentsStartStop(point, ArchImgProc::Point<float> { point.x + normalizedDir.x, point.y + normalizedDir.y },
-				[&](ArchImgProc::Point<float>& p1Ls, ArchImgProc::Point<float>& p2LS)->bool
+			auto lsStartStop = CLineSearcher<float>::CreateLineSegmentsStartStopIndex(point, ArchImgProc::Point<float> { point.x + normalizedDir.x, point.y + normalizedDir.y },
+				[&](ArchImgProc::Point<float>& p1Ls, ArchImgProc::Point<float>& p2LS, size_t& index)->bool
 			{
 				if (itIndices == this->indices.cend())
 				{
@@ -402,6 +583,7 @@ namespace ArchImgProc
 				tGetPointsFromLineSegment getVal(this->lines[*itIndices]);
 				p1Ls = ArchImgProc::Point<float>{ getVal.x1(), getVal.y1() };
 				p2LS = ArchImgProc::Point<float>{ getVal.x2(), getVal.y2() };
+				index = *itIndices;// std::distance(this->indices.cbegin(), itIndices);
 				/*p1Ls = ArchImgProc::Point<float>{ this->lines[*itIndices].val[0], this->lines[*itIndices].val[1] };
 				p2LS = ArchImgProc::Point<float>{ this->lines[*itIndices].val[2] , this->lines[*itIndices].val[3] };*/
 				++itIndices;

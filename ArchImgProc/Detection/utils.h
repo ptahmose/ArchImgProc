@@ -263,7 +263,9 @@ namespace ArchImgProc
 			{
 				tFloat x, y, weight;
 				if (getData(n, x, y, weight) == false)
+				{
 					break;
+				}
 
 				xS += (x*weight);
 				yS += (y*weight);
@@ -284,7 +286,7 @@ namespace ArchImgProc
 			tFloat bX = xsquaredSum - xS*xS;
 			tFloat bY = ysquaredSum - yS*yS;
 
-			if (fabs(bX) < fabs(bY)) //!< Test verticality/horizontality
+			if (std::fabs(bX) < std::fabs(bY)) //!< Test verticality/horizontality
 			{ // Line is more Vertical.
 				b = bY;
 				std::swap(a, b);
