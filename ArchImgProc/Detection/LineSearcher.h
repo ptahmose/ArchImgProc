@@ -12,12 +12,17 @@ namespace ArchImgProc
 		struct LineSegmentStartEnd
 		{
 			tFlt start, end;
+
+			float GetLength()const { return std::abs(this->end - this->start); }
 		};
 
 		struct LineSegmentStartEndWithIndices
 		{
 			LineSegmentStartEnd startEnd;
 			std::vector<size_t> indices;
+
+			float GetLength() const { return this->startEnd.GetLength(); }
+			size_t GetNumberOfOriginalSegments()const { return this->indices.size(); }
 		};
 
 		static std::vector<LineSegmentStartEnd> CreateLineSegmentsStartStop(
@@ -352,6 +357,7 @@ namespace ArchImgProc
 				pOut->p2.x = this->lineSegmentsStartpoint.x + ptrLs->startEnd.end * this->lineSegmentsDirectionVector.x;
 				pOut->p1.y = this->lineSegmentsStartpoint.y + ptrLs->startEnd.start * this->lineSegmentsDirectionVector.y;
 				pOut->p2.y = this->lineSegmentsStartpoint.y + ptrLs->startEnd.end * this->lineSegmentsDirectionVector.y;
+				pOut->origIndices = ptrLs->indices;
 			}
 
 			return true;
@@ -423,6 +429,9 @@ namespace ArchImgProc
 				{
 					this->lineSegmentsStartpoint = p;
 					this->lineSegmentsDirectionVector = dir;
+
+					// remove spurious and off-site line-segments
+					this->CleanupResults(linkedSegments);
 					this->lineSegments = std::move(linkedSegments);
 					break;
 				}
@@ -433,6 +442,96 @@ namespace ArchImgProc
 		}
 
 	private:
+		struct CleanupParameters
+		{
+			float minLengthSmallSegmentsRemoval;
+			int minNumberOfSegments;
+		};
+
+		static constexpr CleanupParameters StdCleanupParameters()
+		{
+			static CleanupParameters params = { 5.0f,2 };
+			return params;
+		};
+
+		void CleanupResults(std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& linkedSegments)
+		{
+			return this->CleanupResults(linkedSegments, StdCleanupParameters());
+		}
+
+		void CleanupResults(std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& linkedSegments, const CleanupParameters& params)
+		{
+			if (linkedSegments.size() <= 1)
+			{
+				return;
+			}
+
+			std::vector<size_t> toRemove;
+			// remove segments smaller than 5 pixels 
+			for (size_t i = 0; i < linkedSegments.size(); ++i)
+			{
+				if (linkedSegments[i].GetLength() < params.minLengthSmallSegmentsRemoval)
+				{
+					toRemove.push_back(i);
+				}
+				else
+				{
+					if (linkedSegments[i].GetNumberOfOriginalSegments() < params.minNumberOfSegments)
+					{
+						toRemove.push_back(i);
+					}
+				}
+			}
+
+			if (toRemove.size() > 0)
+			{
+				for_each(toRemove.rbegin(), toRemove.rend(),
+					[&](size_t i)
+				{
+					linkedSegments.erase(linkedSegments.begin() + i);
+				});
+			}
+
+			if (linkedSegments.size()<2)
+			{
+				return;
+			}
+
+			// search the smallest segment
+			auto itMinMax = std::minmax_element(linkedSegments.cbegin(), linkedSegments.cend(), [](const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& a, const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& b)->bool
+			{
+				return std::abs(a.startEnd.start - a.startEnd.end) < std::abs(b.startEnd.start - b.startEnd.end);
+			});
+
+			float maxGapLength = std::get<1>(itMinMax)->GetLength() / 2;
+			// if the gap between the smallest segment and the nearest other segment is larger than half the length of the longest element, then remove it
+			float lengthGap = MinDistanceToNearestOtherSegment(linkedSegments, std::get<0>(itMinMax) - linkedSegments.cbegin());
+
+			if (lengthGap > maxGapLength)
+			{
+				linkedSegments.erase(std::get<0>(itMinMax));
+			}
+
+		}
+
+		float MinDistanceToNearestOtherSegment(const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& linkedSegments,size_t i)
+		{
+			std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>::const_iterator l = linkedSegments.cbegin() + i;
+			float minDistance = (std::numeric_limits<float>::max)();
+			for (size_t n=0;n<linkedSegments.size();++n)
+			{
+				if (i!=n)
+				{
+					minDistance = (std::min)(minDistance, std::abs(l->startEnd.start - linkedSegments[n].startEnd.start));
+					minDistance = (std::min)(minDistance, std::abs(l->startEnd.start - linkedSegments[n].startEnd.end));
+					minDistance = (std::min)(minDistance, std::abs(l->startEnd.end - linkedSegments[n].startEnd.start));
+					minDistance = (std::min)(minDistance, std::abs(l->startEnd.end- linkedSegments[n].startEnd.end));
+				}
+			}
+
+			return minDistance;
+		}
+
 		void SearchLineSegmentsWithAngleInRangeAndDistanceLess(ArchImgProc::Point<float>& p, ArchImgProc::Vector2<float> dir, const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEnd>& lineStartStop, float maxAngleDiff, float maxDistance, std::function<void(size_t)> addLineSegment)
 		{
 			tFlt angle = atan(dir.y / dir.x);
