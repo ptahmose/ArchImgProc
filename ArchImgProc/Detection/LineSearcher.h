@@ -492,40 +492,76 @@ namespace ArchImgProc
 				});
 			}
 
-			if (linkedSegments.size()<2)
+			if (linkedSegments.size() < 2)
 			{
 				return;
 			}
 
-			// search the smallest segment
-			auto itMinMax = std::minmax_element(linkedSegments.cbegin(), linkedSegments.cend(), [](const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& a, const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& b)->bool
+			// search the largest segment
+			for (;;)
 			{
-				return std::abs(a.startEnd.start - a.startEnd.end) < std::abs(b.startEnd.start - b.startEnd.end);
-			});
+				auto itMax = std::max_element(linkedSegments.cbegin(), linkedSegments.cend(), [](const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& a, const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& b)->bool
+				{
+					return std::abs(a.startEnd.start - a.startEnd.end) < std::abs(b.startEnd.start - b.startEnd.end);
+				});
 
-			float maxGapLength = std::get<1>(itMinMax)->GetLength() / 2;
-			// if the gap between the smallest segment and the nearest other segment is larger than half the length of the longest element, then remove it
-			float lengthGap = MinDistanceToNearestOtherSegment(linkedSegments, std::get<0>(itMinMax) - linkedSegments.cbegin());
+				float maxGapLength = itMax->GetLength() / 2;
+				// now, we assume that the largest segment is a "true" one
 
-			if (lengthGap > maxGapLength)
-			{
-				linkedSegments.erase(std::get<0>(itMinMax));
+				toRemove.clear();
+				for (size_t i = 0; i < linkedSegments.size(); ++i)
+				{
+					if (i != std::distance(linkedSegments.cbegin(), itMax))
+					{
+						float lengthGap = MinDistanceToNearestOtherSegment(linkedSegments, i);
+						if (lengthGap > maxGapLength)
+						{
+							toRemove.push_back(i);
+						}
+					}
+				}
+
+				if (toRemove.size() == 0)
+				{
+					break;
+				}
+
+				for_each(toRemove.rbegin(), toRemove.rend(),
+					[&](size_t i)
+				{
+					linkedSegments.erase(linkedSegments.begin() + i);
+				});
 			}
+
+
+			/*			auto itMinMax = std::minmax_element(linkedSegments.cbegin(), linkedSegments.cend(), [](const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& a, const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& b)->bool
+						{
+							return std::abs(a.startEnd.start - a.startEnd.end) < std::abs(b.startEnd.start - b.startEnd.end);
+						});
+
+						float maxGapLength = std::get<1>(itMinMax)->GetLength() / 2;
+						// if the gap between the smallest segment and the nearest other segment is larger than half the length of the longest element, then remove it
+						float lengthGap = MinDistanceToNearestOtherSegment(linkedSegments, std::get<0>(itMinMax) - linkedSegments.cbegin());
+
+						if (lengthGap > maxGapLength)
+						{
+							linkedSegments.erase(std::get<0>(itMinMax));
+						}*/
 
 		}
 
-		float MinDistanceToNearestOtherSegment(const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& linkedSegments,size_t i)
+		float MinDistanceToNearestOtherSegment(const std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& linkedSegments, size_t i)
 		{
 			std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>::const_iterator l = linkedSegments.cbegin() + i;
 			float minDistance = (std::numeric_limits<float>::max)();
-			for (size_t n=0;n<linkedSegments.size();++n)
+			for (size_t n = 0; n < linkedSegments.size(); ++n)
 			{
-				if (i!=n)
+				if (i != n)
 				{
 					minDistance = (std::min)(minDistance, std::abs(l->startEnd.start - linkedSegments[n].startEnd.start));
 					minDistance = (std::min)(minDistance, std::abs(l->startEnd.start - linkedSegments[n].startEnd.end));
 					minDistance = (std::min)(minDistance, std::abs(l->startEnd.end - linkedSegments[n].startEnd.start));
-					minDistance = (std::min)(minDistance, std::abs(l->startEnd.end- linkedSegments[n].startEnd.end));
+					minDistance = (std::min)(minDistance, std::abs(l->startEnd.end - linkedSegments[n].startEnd.end));
 				}
 			}
 
