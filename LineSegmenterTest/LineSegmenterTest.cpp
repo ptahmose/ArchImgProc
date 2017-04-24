@@ -58,7 +58,7 @@ static void WriteHougLines(float length, float angleMin, float angleMax, float d
 	},
 		angleMin, angleMax, distMin, distMax, vecIndex);
 
-	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height);
+	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height,nullptr);
 	refiner.Refine();
 
 	size_t i = 0; 

@@ -269,7 +269,7 @@ namespace ArchImgProc
 	private:
 		const std::vector<tLineSegment>& lines;
 		std::vector<size_t> indices;
-
+		std::function<bool(size_t)> fncCanConsiderSegment;
 
 		/// <summary>
 		/// For each iteration we store how many elements have been present in the "indices"-vector before the next iteration 
@@ -404,8 +404,8 @@ namespace ArchImgProc
 		}
 
 	public:
-		CHoughLineRefiner(const std::vector<tLineSegment>& lines, std::vector<size_t>& indices, int width, int height)
-			:lines(lines), indices(indices), width(width), height(height)
+		CHoughLineRefiner(const std::vector<tLineSegment>& lines, std::vector<size_t>& indices, int width, int height, std::function<bool(size_t)> fncCanConsiderSegment)
+			:lines(lines), indices(indices), width(width), height(height), fncCanConsiderSegment(fncCanConsiderSegment)
 		{
 			this->parameters.SetDefaults();
 		}
@@ -580,6 +580,14 @@ namespace ArchImgProc
 					continue;
 				}
 
+				if ((bool)this->fncCanConsiderSegment == true)
+				{
+					if (this->fncCanConsiderSegment(std::distance(this->lines.cbegin(), it)) == false)
+					{
+						continue;
+					}
+				}
+
 				tGetPointsFromLineSegment getVal(*it);
 				//tFlt angleOfSegment = atan((it->val[1] - it->val[3]) / (it->val[0] - it->val[2]));
 				tFlt angleOfSegment = atan((getVal.y1() - getVal.y2()) / (getVal.x1() - getVal.x2()));
@@ -646,6 +654,14 @@ namespace ArchImgProc
 				if (std::find(this->indices.cbegin(), this->indices.cend(), index) != this->indices.cend())
 				{
 					continue;
+				}
+
+				if ((bool)this->fncCanConsiderSegment == true)
+				{
+					if (this->fncCanConsiderSegment(std::distance(this->lines.cbegin(), it)) == false)
+					{
+						continue;
+					}
 				}
 
 				tGetPointsFromLineSegment getVal(*it);
