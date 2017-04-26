@@ -36,6 +36,114 @@ static void TestBitmap1()
 //	float x1, y1, x2, y2;
 //};
 
+static CHoughLineRefiner<float, Vec4f> DoLineRefinement(float length, float angleMin, float angleMax, float distMin, float distMax, const std::vector<Vec4f>& lines, int width, int height, float centerX, float centerY,
+	std::function<bool(size_t)> canBeUsed)
+{
+	std::vector<size_t> vecIndex;
+	std::vector<Vec4f>::const_iterator iter = lines.cbegin();
+	CHoughOnLineSegments<float, size_t>::FindItemsInRange(
+		[&](size_t& idx, float& x1, float& y1, float& x2, float& y2)->bool
+	{
+		for (;;)
+		{
+			if (iter == lines.cend())
+			{
+				return false;
+			}
+
+			size_t iterIdx = std::distance(lines.cbegin(), iter);
+			if (canBeUsed(iterIdx))
+			{
+				idx = std::distance(lines.cbegin(), iter);
+				x1 = iter->val[0] - centerX;
+				y1 = iter->val[1] - centerY;
+				x2 = iter->val[2] - centerX;
+				y2 = iter->val[3] - centerY;
+				++iter;
+				return true;
+			}
+
+			++iter;
+		}
+	},
+		angleMin, angleMax, distMin, distMax, vecIndex);
+
+	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height, canBeUsed);
+	refiner.Refine();
+	return refiner;
+}
+
+static void WriteRefined(const CHoughLineRefiner<float, Vec4f>& refiner, const std::vector<Vec4f>& lines, int width, int height, const std::wstring& filename)
+{
+	size_t i = 0;
+	CWriteOutData::WriteLineSegmentsAsSvg<float>(
+		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
+	{
+		if (i < refiner.GetResultLineSegmentsCount())
+		{
+			CHoughLineRefiner<float, Vec4f>::ResultLineSegment lsResult;
+			bool b = refiner.GetResultLineSegment(i, &lsResult);
+			assert(b == true);
+			x1 = lsResult.p1.x; x2 = lsResult.p2.x;
+			y1 = lsResult.p1.y; y2 = lsResult.p2.y;
+
+			*pStrokewidth = 3;
+			color = "red";
+		}
+		else
+		{
+			size_t j = i - refiner.GetResultLineSegmentsCount();
+			if (j >= lines.size())
+			{
+				return false;
+			}
+
+			int foundInIteration = -1;
+			refiner.EnumOriginalLineSegments(
+				[&](size_t index, int iteration, float x1, float y1, float x2, float y2)->bool
+			{
+				if (j == index)
+				{
+					foundInIteration = iteration;
+					return false;
+				}
+
+				return true;
+			});
+
+			x1 = lines[j].val[0]; y1 = lines[j].val[1]; x2 = lines[j].val[2]; y2 = lines[j].val[3];
+
+			if (foundInIteration < 0)
+			{
+				color = "black";
+			}
+			else
+			{
+				switch (foundInIteration)
+				{
+				case 0:
+					color = "orange";
+					break;
+				case 1:
+					color = "blue";
+					break;
+				case 2:
+					color = "green";
+					break;
+				default:
+					color = "yellow";
+					break;
+				}
+			}
+		}
+
+		++i;
+		return true;
+	},
+		width, height,
+		filename.c_str());
+}
+
 static void WriteHougLines(float length, float angleMin, float angleMax, float distMin, float distMax, const std::vector<Vec4f>& lines, int width, int height, float centerX, float centerY, const std::wstring& filename)
 {
 	std::vector<size_t> vecIndex;
@@ -58,10 +166,10 @@ static void WriteHougLines(float length, float angleMin, float angleMax, float d
 	},
 		angleMin, angleMax, distMin, distMax, vecIndex);
 
-	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height,nullptr);
+	CHoughLineRefiner<float, Vec4f> refiner(lines, vecIndex, width, height, nullptr);
 	refiner.Refine();
 
-	size_t i = 0; 
+	size_t i = 0;
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(
 		[&](float& x1, float& y1, float& x2, float& y2, float* pStrokewidth, std::string& color)->bool
 	{
@@ -79,7 +187,7 @@ static void WriteHougLines(float length, float angleMin, float angleMax, float d
 		else
 		{
 			size_t j = i - refiner.GetResultLineSegmentsCount();
-			if (j>=lines.size())
+			if (j >= lines.size())
 			{
 				return false;
 			}
@@ -99,7 +207,7 @@ static void WriteHougLines(float length, float angleMin, float angleMax, float d
 
 			x1 = lines[j].val[0]; y1 = lines[j].val[1]; x2 = lines[j].val[2]; y2 = lines[j].val[3];
 
-			if (foundInIteration<0)
+			if (foundInIteration < 0)
 			{
 				color = "black";
 			}
@@ -199,6 +307,21 @@ static void WriteHougLines(float length, float angleMin, float angleMax, float d
 		filename.c_str());*/
 }
 
+static bool IsLineSegmentUsed(const CHoughLineRefiner<float, Vec4f>& refiner, size_t idx)
+{
+	for (size_t i = 0; i < refiner.GetResultLineSegmentsCount(); ++i)
+	{
+		CHoughLineRefiner<float, Vec4f>::ResultLineSegment lsResult;
+		refiner.GetResultLineSegment(i, &lsResult);
+		if (std::find(lsResult.origIndices.cbegin(), lsResult.origIndices.cend(), idx) != lsResult.origIndices.cend())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 {
 	float centerX = width / 2;
@@ -215,6 +338,43 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 
 	hough.Sort();
 
+
+	std::vector< CHoughLineRefiner<float, Vec4f>> refinedLines;
+	for (int no = 0; no < 20; ++no)
+	{
+		float length, angleMin, angleMax, distMin, distMax;
+		hough.GetAngleAndDistanceMaxMinSortedByCount(no, &length, &angleMin, &angleMax, &distMin, &distMax);
+
+		auto refinedLine = DoLineRefinement(length, angleMin, angleMax, distMin, distMax, lines, width, height, centerX, centerY,
+			[&](size_t idx)->bool
+		{
+			for (auto it : refinedLines)
+			{
+				if (IsLineSegmentUsed(it, idx) == true)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		});
+
+		refinedLines.emplace_back(refinedLine);
+	}
+
+	int no = 0;
+	for (auto it : refinedLines)
+	{
+
+		wstringstream filename;
+		filename << LR"(W:\TestRun_OCV2_)" << no << LR"(.svg)";
+
+		WriteRefined(it, lines, width, height, filename.str());
+		++no;
+	}
+
+
+	/*
 	for (int no = 0; no < 20; ++no)
 	{
 		float length, angleMin, angleMax, distMin, distMax;
@@ -226,6 +386,7 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 		float a2 = CUtils::RadToDeg(angleMax);
 		WriteHougLines(length, angleMin, angleMax, distMin, distMax, lines, width, height, centerX, centerY, filename.str());
 	}
+	*/
 
 	/*std::vector<size_t> vecIndex;
 	std::vector<Vec4f>::const_iterator iter = lines.cbegin();
@@ -531,9 +692,9 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 
 		++it;
 		return true;
-},
-width, height,
-LR"(W:\test_OCV_2.svg)");
+	},
+		width, height,
+		LR"(W:\test_OCV_2.svg)");
 #endif
 }
 
