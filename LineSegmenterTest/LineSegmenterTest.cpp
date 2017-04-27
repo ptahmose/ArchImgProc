@@ -359,7 +359,10 @@ static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 			return true;
 		});
 
-		refinedLines.emplace_back(refinedLine);
+		if (refinedLine.IsAcceptable())
+		{
+			refinedLines.emplace_back(refinedLine);
+		}
 	}
 
 	int no = 0;

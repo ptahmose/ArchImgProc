@@ -260,10 +260,13 @@ namespace ArchImgProc
 			tFlt	maxAngleDiff;
 			tFlt	maxDistance;
 
+			tFlt	minTotalLength;
+
 			void SetDefaults()
 			{
 				this->maxDistance = 8;
 				this->maxAngleDiff = CUtils::DegToRad(9.f);
+				this->minTotalLength = 20;
 			}
 		};
 	private:
@@ -441,6 +444,26 @@ namespace ArchImgProc
 			}
 		}
 
+		bool IsAcceptable() const
+		{
+			float totalLength = this->CalcTotalLength();
+			if (totalLength < this->parameters.minTotalLength)
+			{
+				return false;
+			}
+			return true;
+		}
+	private:
+		float CalcTotalLength() const
+		{
+			float length = 0;
+			for (auto it = this->lineSegments.cbegin(); it != this->lineSegments.cend(); ++it)
+			{
+				length += (float)std::abs(it->startEnd.start - it->startEnd.end);
+			}
+
+			return length;
+		}
 	private:
 		struct CleanupParameters
 		{
