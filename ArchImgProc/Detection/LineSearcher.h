@@ -479,7 +479,37 @@ namespace ArchImgProc
 
 		void CleanupResults(std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& linkedSegments)
 		{
-			return this->CleanupResults(linkedSegments, StdCleanupParameters());
+			this->CleanupResults(linkedSegments, StdCleanupParameters());
+
+			if (linkedSegments.size() <= 1)
+			{
+				return;
+			}
+
+			// ok, in this case - we take the largest segment, allow gaps up to 25% of it and try to link them
+			auto itMax = std::max_element(linkedSegments.cbegin(), linkedSegments.cend(), [](const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& a, const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& b)->bool
+			{
+				return std::abs(a.startEnd.start - a.startEnd.end) < std::abs(b.startEnd.start - b.startEnd.end);
+			});
+
+			auto maxLength = std::abs(itMax->startEnd.start - itMax->startEnd.end);
+			auto maxGap = maxLength*(decltype(maxLength))0.25;
+			auto linked = CLineSearcher<float>::LinkSmallGaps(linkedSegments, maxGap);
+			if (linked.size()<=1)
+			{
+				linkedSegments = std::move(linked);
+			}
+			else
+			{
+				auto itMax = std::max_element(linkedSegments.cbegin(), linkedSegments.cend(), [](const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& a, const ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices& b)->bool
+				{
+					return std::abs(a.startEnd.start - a.startEnd.end) < std::abs(b.startEnd.start - b.startEnd.end);
+				});
+
+				auto onlyLargest = std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>();
+				onlyLargest.push_back(*itMax);
+				linkedSegments = std::move(onlyLargest);
+			}
 		}
 
 		void CleanupResults(std::vector<ArchImgProc::CLineSearcher<float>::LineSegmentStartEndWithIndices>& linkedSegments, const CleanupParameters& params)
