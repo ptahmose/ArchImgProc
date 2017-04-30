@@ -8,6 +8,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "../ArchImgProc/Detection/ArrowDetect.h"
+#include "cmdlineOptions.h"
+#include "ArrowDetection.h"
 
 using namespace ArchImgProc;
 using namespace cv;
@@ -324,8 +326,8 @@ static bool IsLineSegmentUsed(const CHoughLineRefiner<float, Vec4f>& refiner, si
 
 static void HoughTest(const std::vector<Vec4f>& lines, int width, int height)
 {
-	float centerX = width / 2;
-	float centerY = height / 2;
+	float centerX = float(width) / 2;
+	float centerY = float(height) / 2;
 
 	CHoughOnLineSegments<float, size_t> hough(CUtils::CalcDistance(0.f, 0.f, centerX, centerY), 100, 100);
 	for (size_t i = 0; i < lines.size(); ++i)
@@ -747,9 +749,18 @@ static void TestBitmap2()
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(lsd2.cbegin(), lsd2.cend(), LR"(W:\test_LSD.svg)");
 }
 
-int main()
+int main(int argc, char * argv[])
 {
 	CoInitialize(nullptr);
+
+	CCmdlineOptions options;
+	options.Parse(argv, argc);
+
+	{
+		ArrowDetection ad(ArrowDetection::LoadAndPreprocess(options.GetSourceFilename()));
+		ad.DoStep1();
+		ad.DoStep2();
+	}
 
 	//TestBitmap1();
 

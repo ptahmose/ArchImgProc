@@ -9,7 +9,7 @@ namespace ArchImgProc
 	class CLoadBitmap
 	{
 	private:
-		static CComPtr<IWICBitmapSource> Convert(IWICImagingFactory* pImgFactory, CComPtr<IWICBitmapFrameDecode> src)
+		static inline CComPtr<IWICBitmapSource> Convert(IWICImagingFactory* pImgFactory, CComPtr<IWICBitmapFrameDecode> src)
 		{
 			WICPixelFormatGUID fmt;
 			HRESULT hr = src->GetPixelFormat(&fmt);
@@ -27,7 +27,7 @@ namespace ArchImgProc
 			return CComPtr<IWICBitmapSource>(cpConvertedFrame);
 		}
 
-		static void CopyToRgb24Bitmap(IWICBitmapSource* pSrc, std::shared_ptr<ArchImgProc::IBitmapData> dest)
+		static inline void CopyToRgb24Bitmap(IWICBitmapSource* pSrc, std::shared_ptr<ArchImgProc::IBitmapData> dest)
 		{
 			// precondition: pSrc is either 24bppBGR, and dest is float
 			UINT nWidth, nHeight;

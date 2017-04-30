@@ -94,6 +94,6 @@ namespace ArchImgProc
 
 namespace ArchImgProc
 {
-	std::shared_ptr<IBitmapData> LoadBitmapFromFile(const wchar_t* szwFilename) { return CLoadBitmap::LoadBitmapFromFile(szwFilename); }
-	void SaveBitmapToFileAsPng(std::shared_ptr<IBitmapData> bitmap, const wchar_t* szwFilename) { return CSaveBitmap::SaveBitmapAsPng(bitmap, szwFilename); }
+	inline std::shared_ptr<IBitmapData> LoadBitmapFromFile(const wchar_t* szwFilename) { return CLoadBitmap::LoadBitmapFromFile(szwFilename); }
+	inline void SaveBitmapToFileAsPng(std::shared_ptr<IBitmapData> bitmap, const wchar_t* szwFilename) { return CSaveBitmap::SaveBitmapAsPng(bitmap, szwFilename); }
 }
