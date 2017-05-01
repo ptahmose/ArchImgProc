@@ -24,6 +24,21 @@ ArrowDetection::ArrowDetection(std::shared_ptr<cv::Mat> img)
 	this->parameters.SetDefaults();
 }
 
+int ArrowDetection::GetBitmapWidth() const
+{
+	return this->img->cols;
+}
+
+int ArrowDetection::GetBitmapHeight() const
+{
+	return this->img->rows;
+}
+
+const std::vector<cv::Vec4f >& ArrowDetection::GetLines() const
+{
+	return this->lines;
+}
+
 void ArrowDetection::DoStep1()
 {
 	std::vector< Vec4f > lines;

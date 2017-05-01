@@ -41,11 +41,17 @@ public:
 
 	ArrowDetection(std::shared_ptr<cv::Mat> img);
 
+	int GetBitmapWidth() const;
+	int GetBitmapHeight() const;
+	const std::vector<cv::Vec4f >& GetLines() const;
+
 	void DoStep1();
 
 	void DoStep2();
 
 	bool DoRefinement();
+
+	const std::vector<tHoughRefiner>& GetRefinedLines() const { return this->houghRefined; }
 private:
 	tHoughRefiner DoLineRefinement(const tHoughOnLineSegments::BinResult& binResult);
 	void AddUsedLineSegments(const ArrowDetection::tHoughRefiner& refiner);

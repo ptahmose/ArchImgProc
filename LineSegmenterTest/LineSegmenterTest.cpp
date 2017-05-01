@@ -762,6 +762,16 @@ int main(int argc, char * argv[])
 		ad.DoStep2();
 		for (int i = 0; i < 20; ++i)
 			ad.DoRefinement();
+
+		int i = 0;
+		for (auto it : ad.GetRefinedLines())
+		{
+			wstringstream filename;
+			filename << options.GetOutputFolder().c_str() << options.GetOutputFilenamePrefix().c_str() << i << LR"(.svg)";
+
+			WriteRefined(it, ad.GetLines(), ad.GetBitmapWidth(), ad.GetBitmapHeight(), filename.str());
+			++i;
+		}
 	}
 
 	//TestBitmap1();
