@@ -760,6 +760,8 @@ int main(int argc, char * argv[])
 		ArrowDetection ad(ArrowDetection::LoadAndPreprocess(options.GetSourceFilename()));
 		ad.DoStep1();
 		ad.DoStep2();
+		for (int i = 0; i < 20; ++i)
+			ad.DoRefinement();
 	}
 
 	//TestBitmap1();

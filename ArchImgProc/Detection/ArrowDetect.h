@@ -63,6 +63,15 @@ namespace ArchImgProc
 		tFlt maxDistance;
 		CHoughAccumulator<float, tLsIdx> accumulator;
 	public:
+		struct BinResult
+		{
+			tFlt length;
+			tFlt angleMin;
+			tFlt angleMax; 
+			tFlt distanceMin;
+			tFlt distanceMax;
+		};
+	public:
 		CHoughOnLineSegments(tFlt maxDistance, int distanceBins, int angleBins)
 			: distanceBinsCount(distanceBins),
 			angleBinsCount(angleBins),
@@ -103,6 +112,18 @@ namespace ArchImgProc
 		void Sort()
 		{
 			this->accumulator.Sort();
+		}
+
+		bool GetAngleAndDistanceMaxMinSortedByCount(int i, BinResult* result)
+		{
+			if (result!=nullptr)
+			{
+				return this->GetAngleAndDistanceMaxMinSortedByCount(i, &result->length, &result->angleMin, &result->angleMax, &result->distanceMin, &result->distanceMax);
+			}
+			else
+			{
+				return this->GetAngleAndDistanceMaxMinSortedByCount(i, nullptr, nullptr, nullptr, nullptr, nullptr);
+			}
 		}
 
 		bool GetAngleAndDistanceMaxMinSortedByCount(int i, float* length, float* angleMin, float* angleMax, float* distanceMin, float* distanceMax)

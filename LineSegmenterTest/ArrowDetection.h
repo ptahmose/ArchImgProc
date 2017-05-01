@@ -2,6 +2,7 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include "../ArchImgProc/Detection/ArrowDetect.h"
+#include "../ArchImgProc/Detection/LineSearcher.h"
 
 
 class ArrowDetection
@@ -19,13 +20,22 @@ public:
 		}
 	};
 private:
+
+private:
 	Parameters parameters;
 
 	std::shared_ptr<cv::Mat> img;
 
 	std::vector<cv::Vec4f > lines;
+	std::vector<bool> usedLines;
 
-	std::shared_ptr<ArchImgProc::CHoughOnLineSegments<float, size_t>> spHoughOnLs;
+	typedef ArchImgProc::CHoughOnLineSegments<float, size_t> tHoughOnLineSegments;
+	typedef ArchImgProc::CHoughLineRefiner<float, cv::Vec4f> tHoughRefiner;
+
+	std::shared_ptr<tHoughOnLineSegments> spHoughOnLs;
+
+	int refinementCnt;
+	std::vector<tHoughRefiner> houghRefined;
 public:
 	static std::shared_ptr<cv::Mat> LoadAndPreprocess(const std::string& strFilename);
 
@@ -34,4 +44,9 @@ public:
 	void DoStep1();
 
 	void DoStep2();
+
+	bool DoRefinement();
+private:
+	tHoughRefiner DoLineRefinement(const tHoughOnLineSegments::BinResult& binResult);
+	void AddUsedLineSegments(const ArrowDetection::tHoughRefiner& refiner);
 };
