@@ -2,6 +2,7 @@
 #include "ArrowDetection.h"
 #include <opencv2/imgcodecs.hpp>
 #include "../ArchImgProc/Bitmap/IBitmap.h"
+#include "utils.h"
 
 using namespace std;
 using namespace cv;
@@ -134,13 +135,37 @@ ArrowDetection::tHoughRefiner ArrowDetection::DoLineRefinement(const ArrowDetect
 
 void ArrowDetection::AddUsedLineSegments(const ArrowDetection::tHoughRefiner& refiner)
 {
+	// We only mark line-segments as "used" if their direction deviates less than some limit
+	// from the average of the result with respect to the direction. So we calculate the angle between
+	// the direction vector of each line segment and the "result direction".
+
+	if (refiner.GetResultLineSegmentsCount() < 1)
+	{
+		return;	// must no happen I suppose
+	}
+
+	// now get the direction vector
+	ArchImgProc::Vector2<float> dirResult = refiner.GetDirectionVectorOfResults().GetNormalized();
+
+	auto maxAngleDeviation = ArchImgProc::CUtils::DegToRad(this->parameters.maxDeviationOfAngle);
+
 	for (size_t i = 0; i < refiner.GetResultLineSegmentsCount(); ++i)
 	{
 		tHoughRefiner::ResultLineSegment lsResult;
 		refiner.GetResultLineSegment(i, &lsResult);
 		for (auto it = lsResult.origIndices.cbegin(); it != lsResult.origIndices.cend(); ++it)
 		{
-			this->usedLines[*it] = true;
+			ArchImgProc::Vector2<float> dirLs{ this->lines[*it][0] - this->lines[*it][2],this->lines[*it][1] - this->lines[*it][3] };
+			dirLs = dirLs.GetNormalized();
+			auto angle = std::acos(dirResult.DotProduct(dirLs));
+			if (angle <= maxAngleDeviation || std::abs(angle - (decltype(angle))3.14159265358979323846) < maxAngleDeviation)
+			{
+				this->usedLines[*it] = true;
+			}
+			else
+			{
+				angle *= 1;
+			}
 		}
 	}
 }

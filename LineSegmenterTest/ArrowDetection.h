@@ -13,10 +13,17 @@ public:
 		int noHoughDistanceBins;
 		int noHoughAngleBins;
 
+
+		/// <summary>The deviation of the angle of a line-segment from the result-direction in order
+		/// 		 to remove the line-segment from the line-segments available for further refinements
+		/// 		 This quantiy is given in degrees.</summary>
+		float maxDeviationOfAngle;
+
 		void SetDefaults()
 		{
 			this->noHoughDistanceBins = 100;
 			this->noHoughAngleBins = 100;
+			this->maxDeviationOfAngle = 4.5;
 		}
 	};
 private:

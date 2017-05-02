@@ -346,6 +346,16 @@ namespace ArchImgProc
 			return this->lineSegments.size();
 		}
 
+		ArchImgProc::Vector2<tFlt> GetDirectionVectorOfResults() const
+		{
+			if (this->GetResultLineSegmentsCount()<0)
+			{
+				throw std::runtime_error("No result available");
+			}
+
+			return this->lineSegmentsDirectionVector;
+		}
+
 		bool GetResultLineSegment(size_t index, ResultLineSegment* pOut)const
 		{
 			if (index >= this->GetResultLineSegmentsCount())

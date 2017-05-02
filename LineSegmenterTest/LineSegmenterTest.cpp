@@ -776,10 +776,12 @@ int main(int argc, char * argv[])
 
 	//TestBitmap1();
 
+	/*
 	TestBitmap2();
 
 
 	waitKey(0);
+	*/
 
 	CoUninitialize();
 
