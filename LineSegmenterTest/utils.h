@@ -6,7 +6,8 @@
 
 class CUtils
 {
-	std::string ConvertFromUtf16ToUtf8(const std::wstring& wstr)
+public:
+	static std::string ConvertFromUtf16ToUtf8(const std::wstring& wstr)
 	{
 		std::string convertedString;
 		int requiredSize = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, 0, 0, 0, 0);
@@ -19,7 +20,7 @@ class CUtils
 		return convertedString;
 	}
 
-	std::wstring ConvertFromUtf8ToUtf16(const std::string& str)
+	static std::wstring ConvertFromUtf8ToUtf16(const std::string& str)
 	{
 		std::wstring convertedString;
 		int requiredSize = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, 0, 0);

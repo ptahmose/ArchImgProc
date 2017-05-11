@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\WriteOut">
+      <UniqueIdentifier>{fa43642f-7dbe-4260-b2d4-e7c836655a27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\WriteOut">
+      <UniqueIdentifier>{757afe29-e8f8-451f-b7ad-7ef84db2e055}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -33,6 +39,9 @@
     <ClInclude Include="ArrowDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WriteHtml.h">
+      <Filter>Header Files\WriteOut</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -46,6 +55,9 @@
     </ClCompile>
     <ClCompile Include="ArrowDetection.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WriteHtml.cpp">
+      <Filter>Source Files\WriteOut</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -10,6 +10,9 @@
 #include "../ArchImgProc/Detection/ArrowDetect.h"
 #include "cmdlineOptions.h"
 #include "ArrowDetection.h"
+#include "writehtml.h"
+#include <locale>
+#include <codecvt>
 
 using namespace ArchImgProc;
 using namespace cv;
@@ -749,6 +752,14 @@ static void TestBitmap2()
 	CWriteOutData::WriteLineSegmentsAsSvg<float>(lsd2.cbegin(), lsd2.cend(), LR"(W:\test_LSD.svg)");
 }
 
+static std::wstring s2ws(const std::string& str)
+{
+	typedef std::codecvt_utf8<wchar_t> convert_typeX;
+	wstring_convert<convert_typeX, wchar_t> converterX;
+
+	return converterX.from_bytes(str);
+}
+
 int main(int argc, char * argv[])
 {
 	CoInitialize(nullptr);
@@ -772,6 +783,15 @@ int main(int argc, char * argv[])
 			WriteRefined(it, ad.GetLines(), ad.GetBitmapWidth(), ad.GetBitmapHeight(), filename.str());
 			++i;
 		}
+
+		wstringstream htmlFilename;
+		htmlFilename << options.GetOutputFolder().c_str() << options.GetOutputFilenamePrefix().c_str() << i << LR"(.html)";
+		CResultAsHtmlOutput htmlOutput(htmlFilename.str());
+		htmlOutput.SetImageUrl(s2ws(options.GetSourceFilename()).c_str());
+		htmlOutput.SetWidthHeight(ad.GetBitmapWidth(), ad.GetBitmapHeight());
+		htmlOutput.SetWidthHeightImage(ad.GetBitmapWidth(), ad.GetBitmapHeight());
+		htmlOutput.SetWidthHeightSvg(ad.GetBitmapWidth(), ad.GetBitmapHeight());
+
 	}
 
 	//TestBitmap1();
