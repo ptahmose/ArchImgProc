@@ -13,6 +13,7 @@
 #include "writehtml.h"
 #include <locale>
 #include <codecvt>
+#include "CChainFuncs.h"
 
 using namespace ArchImgProc;
 using namespace cv;
@@ -791,7 +792,41 @@ int main(int argc, char * argv[])
 		htmlOutput.SetWidthHeight(ad.GetBitmapWidth(), ad.GetBitmapHeight());
 		htmlOutput.SetWidthHeightImage(ad.GetBitmapWidth(), ad.GetBitmapHeight());
 		htmlOutput.SetWidthHeightSvg(ad.GetBitmapWidth(), ad.GetBitmapHeight());
+		htmlOutput.SetImageUrl(s2ws(options.GetSourceFilename()).c_str());
 
+		CChainFuncs chain;
+		for (int i = 0; i < ad.GetRefinedLines().size(); ++i)
+		{
+			chain.AddFunc(
+				[i, &ad](int totalIdx, int idx, float& x1, float& y1, float& x2, float& y2, float& width, std::string& color)->bool
+			{
+				auto refinedLines = ad.GetRefinedLines()[i];
+				CHoughLineRefiner<float, Vec4f>::ResultLineSegment lsResult;
+				bool b = refinedLines.GetResultLineSegment(idx, &lsResult);
+				if (b == false)
+				{
+					return false;
+				}
+
+				x1 = lsResult.p1.x; x2 = lsResult.p2.x;
+				y1 = lsResult.p1.y; y2 = lsResult.p2.y;
+				width = 3;
+				color = "red";
+			});
+		}
+
+		htmlOutput.SetGetSegments(std::bind(&CChainFuncs::Func, chain, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+		//htmlOutput.SetGetSegments( [&](int idx, float& x1, float& y1, float& x2, float& y2, float& width, std::string&)->bool
+		//{
+		//	auto vec = ad.GetRefinedLines();
+		//	if (vec.size()<=idx)
+		//	{
+		//		return false;
+		//	}
+
+		//	x1 = vec[idx].
+		//});
+		htmlOutput.Generate();
 	}
 
 	//TestBitmap1();
