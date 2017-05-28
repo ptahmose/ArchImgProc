@@ -36,9 +36,9 @@ public:
 
 	struct LineData
 	{
-		float x0; 
-		float y0; 
-		float x1; 
+		float x0;
+		float y0;
+		float x1;
 		float y1;
 	};
 
@@ -60,13 +60,19 @@ public:
 
 	typedef EllipseUtils::EllipseParameters<float> EllipseParams;
 private:
+	struct HideShowModifierInfo
+	{
+		std::string text;
+		std::string className;
+	};
 	static const char* szHTML;
 
-	std::function<bool(int, SegmentData&, Attributes& )> getSegments;
+	std::function<bool(int, SegmentData&, Attributes&)> getSegments;
 	std::function<bool(int, EllipseParams&, CResultAsHtmlOutput::EllipseOptions&)> getEllipse;
 	std::function<bool(int, float& x, float&y, std::string& color)> getPoint;
 	std::function<bool(int, LineData& lineData, Attributes& attribs)> getLine;
 	std::function<bool(int, float& x, float& y)> getPolygonPoints;
+	std::vector<HideShowModifierInfo> hideShowModifierInfo;
 	std::wstring filenameImage;
 	int widthsvg, heightsvg;
 	int widthImage, heightImage;
@@ -82,7 +88,7 @@ public:
 	void SetWidthHeight(int width, int height) { this->SetWidthHeightSvg(width, height); this->SetWidthHeightImage(width, height); }
 	void SetWidthHeightSvg(int width, int height) { this->widthsvg = width; this->heightsvg = height; }
 	void SetWidthHeightImage(int width, int height) { this->widthImage = width; this->heightImage = height; }
-	void SetGetSegments(std::function<bool(int, SegmentData&, Attributes& )> getSegments) { this->getSegments = getSegments; }
+	void SetGetSegments(std::function<bool(int, SegmentData&, Attributes&)> getSegments) { this->getSegments = getSegments; }
 	void SetGetEllipses(std::function<bool(int, EllipseParams&, EllipseOptions& option)> getEllipse) { this->getEllipse = getEllipse; }
 	void SetGetPoints(std::function<bool(int, float& x, float&y, std::string& color)> getPoint) { this->getPoint = getPoint; }
 	void SetGetLines(std::function<bool(int, LineData& lineData, Attributes& attribs)> getLine) { this->getLine = getLine; }
@@ -91,6 +97,9 @@ public:
 
 	void AddCustomTextLine(const char* sz);
 	void AddCustomTextLine(const wchar_t* sz);
+
+	void AddShowHideModifierForClass(const char* text, const char* className) { this->hideShowModifierInfo.push_back(HideShowModifierInfo{ text, className }); }
+	void AddShowHideModifierForClass(const std::string& text, const std::string& className) { this->hideShowModifierInfo.push_back(HideShowModifierInfo{ text, className }); }
 
 	void Generate();
 

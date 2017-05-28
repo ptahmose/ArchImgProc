@@ -810,6 +810,37 @@ int main(int argc, char * argv[])
 			attribs.className = "allsegments";
 			return true;
 		});
+		htmlOutput.AddShowHideModifierForClass("Show all line-segments", "allsegments");
+
+		for (int i = 0; i < ad.GetRefinedLines().size(); ++i)
+		{
+			std::ostringstream strStr;
+			strStr << "origlineseg" << i;
+			auto className = strStr.str();
+			chain.AddFunc(
+				[i, &allLines, &ad,className](int totalIdx, int idx, CResultAsHtmlOutput::SegmentData& segmentData, CResultAsHtmlOutput::Attributes& attribs)->bool
+			{
+				const ArchImgProc::CHoughLineRefiner<float, cv::Vec4f>&  refinedLines = ad.GetRefinedLines()[i];
+				CHoughLineRefiner<float, Vec4f>::OriginalLineSegment origLs;
+				bool b = refinedLines.GetOriginalLineSegment(idx, &origLs);
+				if (b == false)
+					return false;
+
+				segmentData.x0 = allLines[origLs.index].val[0];
+				segmentData.y0 = allLines[origLs.index].val[1];
+				segmentData.x1 = allLines[origLs.index].val[2];
+				segmentData.y1 = allLines[origLs.index].val[3];
+				segmentData.width = 2;
+				attribs.color = "blue";
+				attribs.className = className;
+				return true;
+			});
+
+			strStr.str("");
+			strStr << "Original LineSegments (" << i << ")";
+			htmlOutput.AddShowHideModifierForClass(strStr.str(), className);
+		};
+
 		for (int i = 0; i < ad.GetRefinedLines().size(); ++i)
 		{
 			chain.AddFunc(

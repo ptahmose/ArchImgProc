@@ -79,6 +79,7 @@ R"literal(<!DOCTYPE html>
 	<th>Change Display </th>
 	<th style="width:450px">Value</th>
   </tr>
+  %[modifier]
   <tr>
 	<td>Show all line-segments</td>
 	<td><input id="showAllLineSegmentsCheckbox" type="checkbox" checked="true" onchange="setShowAllLineSegments(this.checked)" /></td>
@@ -112,6 +113,8 @@ function setShowAllLineSegments(newValue)
 {
 	$('.allsegments').css({"display":newValue?"":"none"});
 }
+
+%[modifierHandlers]
 
 </script>
 
@@ -230,6 +233,32 @@ void CResultAsHtmlOutput::Generate()
 			else if (strcmp(szKey, "pointssvg") == 0)
 			{
 				return s2ws(strPoints);
+			}
+			else if (strcmp(szKey, "modifier") == 0)
+			{
+				std::wostringstream s;
+				for (auto i : this->hideShowModifierInfo)
+				{
+					s << L"<tr>" << std::endl <<
+						L"<td>" << i.text.c_str() << "</td>" << std::endl <<
+						L"<td><input type=\"checkbox\" checked=\"true\" onchange=\"handlerFunc" << i.className.c_str() << L"(this.checked)\"/></td>" << std::endl <<
+						L"</tr>" << std::endl;
+				}
+
+				return s.str();
+			}
+			else if (strcmp(szKey, "modifierHandlers") == 0)
+			{
+				std::wostringstream s;
+				for (auto i : this->hideShowModifierInfo)
+				{
+					s << L"function " << "handlerFunc" << i.className.c_str() << L"(newValue)" << std::endl <<
+						L"{" << std::endl <<
+						L"$('." << i.className.c_str() << "').css({\"display\":newValue?\"\":\"none\"});" << std::endl <<
+						L"}" << std::endl;
+				}
+
+				return s.str();
 			}
 
 			return std::wstring(L"XXX");
