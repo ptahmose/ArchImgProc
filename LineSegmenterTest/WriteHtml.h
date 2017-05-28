@@ -52,6 +52,7 @@ public:
 
 		void SetDefault()
 		{
+			this->x0 = this->y0 = this->x1 = this->y1 = std::numeric_limits<float>::quiet_NaN();
 			this->width = 1;
 		}
 	};
@@ -62,7 +63,6 @@ private:
 	static const char* szHTML;
 
 	std::function<bool(int, SegmentData&, Attributes& )> getSegments;
-	//std::function<bool(int, EllipseParameters&, EllipseOptions&)> getEllipse;
 	std::function<bool(int, EllipseParams&, CResultAsHtmlOutput::EllipseOptions&)> getEllipse;
 	std::function<bool(int, float& x, float&y, std::string& color)> getPoint;
 	std::function<bool(int, LineData& lineData, Attributes& attribs)> getLine;
@@ -82,12 +82,9 @@ public:
 	void SetWidthHeight(int width, int height) { this->SetWidthHeightSvg(width, height); this->SetWidthHeightImage(width, height); }
 	void SetWidthHeightSvg(int width, int height) { this->widthsvg = width; this->heightsvg = height; }
 	void SetWidthHeightImage(int width, int height) { this->widthImage = width; this->heightImage = height; }
-	//void SetGetSegments(std::function<bool(int, float& x1, float& y1, float& x2, float& y2, float& width, std::string&)> getSegments) { this->getSegments = getSegments; }
 	void SetGetSegments(std::function<bool(int, SegmentData&, Attributes& )> getSegments) { this->getSegments = getSegments; }
-	//void SetGetEllipses(std::function<bool(int, EllipseParameters&, EllipseOptions& option)> getEllipse) { this->getEllipse = getEllipse; }
 	void SetGetEllipses(std::function<bool(int, EllipseParams&, EllipseOptions& option)> getEllipse) { this->getEllipse = getEllipse; }
 	void SetGetPoints(std::function<bool(int, float& x, float&y, std::string& color)> getPoint) { this->getPoint = getPoint; }
-	//void SetGetLines(std::function<bool(int, float& x0, float&y0, float& x1, float&y1, std::string& color)> getLine) { this->getLine = getLine; }
 	void SetGetLines(std::function<bool(int, LineData& lineData, Attributes& attribs)> getLine) { this->getLine = getLine; }
 	void SetGetPolygonPoints(std::function<bool(int, float& x, float& y)> getPolygonPoints) { this->getPolygonPoints = getPolygonPoints; }
 	void SetImageTransformationMatrix(float a, float b, float c, float d, float e, float f) { this->a = a; this->b = b; this->c = c; this->d = d; this->e = e; this->f = f; }
