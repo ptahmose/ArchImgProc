@@ -109,11 +109,6 @@ function setImageTransparencyValue(newValue)
 	document.getElementById("imageColorMatrix").setAttribute("values", s);
 }
 
-function setShowAllLineSegments(newValue)
-{
-	$('.allsegments').css({"display":newValue?"":"none"});
-}
-
 %[modifierHandlers]
 
 </script>
