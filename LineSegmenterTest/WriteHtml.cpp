@@ -74,8 +74,20 @@ R"literal(<!DOCTYPE html>
   </tr>
 </table>
 
+<table>
+  <tr>
+	<th>Change Display </th>
+	<th style="width:450px">Value</th>
+  </tr>
+  <tr>
+	<td>Show all line-segments</td>
+	<td><input id="showAllLineSegmentsCheckbox" type="checkbox" checked="true" onchange="setShowAllLineSegments(this.checked)" /></td>
+  </tr>
+</table>
+
 %[customtext]
 
+<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
 <script type = "text/javascript">
 window.onload = function() {
 	var s = document.getElementById("imageSaturation").getAttribute("values");
@@ -94,6 +106,11 @@ function setImageTransparencyValue(newValue)
 	var f = newValue / 100.0;
 	var s = "1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 " + f.toString() + " 0";
 	document.getElementById("imageColorMatrix").setAttribute("values", s);
+}
+
+function setShowAllLineSegments(newValue)
+{
+	$('.allsegments').css({"display":newValue?"":"none"});
 }
 
 </script>
@@ -128,7 +145,7 @@ void CResultAsHtmlOutput::AddCustomTextLine(const wchar_t* sz)
 void CResultAsHtmlOutput::Generate()
 {
 	std::string strSegments = this->GenerateSegmentsSvg();
-//	std::string strEllipses = this->GenerateEllipsesSvg();
+	std::string strEllipses = this->GenerateEllipsesSvg();
 	std::string strPoints = this->GeneratePointsSvg();
 	std::string strLines = this->GenerateLinesSvg();
 	std::string strPolygon = this->GeneratePolygonSvg();
@@ -164,7 +181,7 @@ void CResultAsHtmlOutput::Generate()
 			}
 			else if (strcmp(szKey, "ellipsessvg") == 0)
 			{
-				//return s2ws(strEllipses);
+				return s2ws(strEllipses);
 			}
 			else if (strcmp(szKey, "linessvg") == 0)
 			{
@@ -250,75 +267,85 @@ void CResultAsHtmlOutput::GenerateSegmentsSvg(std::ostream& stream)
 		return;
 	}
 
+	CResultAsHtmlOutput::Attributes attribs;
 	for (int i = 0;; ++i)
 	{
 		//LSDLineSegment item;
-		float x0, y0, x1, y1;
-		float width = 1;
-		std::string color;
-		if (!this->getSegments(i, x0, y0, x1, y1, width, color))
+		//float x0, y0, x1, y1;
+		//float width = 1;
+		attribs.Clear();
+		SegmentData sd;
+		sd.SetDefault();
+		//std::string color;
+		if (!this->getSegments(i, sd, attribs))
 		{
 			break;
 		}
 
-		if (color.empty())
+		if (attribs.color.empty())
 		{
-			color = "black";
+			attribs.color = "black";
 		}
 
-		stream << "<line x1 = \"" << x0 << "\" y1=\"" << y0 << "\" x2=\"" << x1 << "\" y2=\"" << y1 << "\" "
-			<< "stroke-width=\"" << width << "\" stroke=\"" << color << "\" />" << std::endl;
+		stream << "<line x1 = \"" << sd.x0 << "\" y1=\"" << sd.y0 << "\" x2=\"" << sd.x1 << "\" y2=\"" << sd.y1 << "\" "
+			<< "stroke-width=\"" << sd.width << "\" stroke=\"" << attribs.color << "\"";
+		if (!attribs.className.empty())
+		{
+			stream << " class=\"" << attribs.className << "\"";
+		}
+
+		stream << "/>" << std::endl;
 	}
 }
 
-//std::string CResultAsHtmlOutput::GenerateEllipsesSvg()
-//{
-//	std::ostringstream s;
-//	this->GenerateEllipsesSvg(s);
-//	return s.str();
-//}
+std::string CResultAsHtmlOutput::GenerateEllipsesSvg()
+{
+	std::ostringstream s;
+	this->GenerateEllipsesSvg(s);
+	return s.str();
+}
 
-//void CResultAsHtmlOutput::GenerateEllipsesSvg(std::ostream& stream)
-//{
-//	if (!this->getEllipse)
-//	{
-//		return;
-//	}
-//
-//	for (int i = 0;; ++i)
-//	{
-//		std::string color;
-//		EllipseOptions options;
-//		EllipseParameters ellParams;
-//		if (!this->getEllipse(i, ellParams, options))
-//		{
-//			break;
-//		}
-//
-//		if (options.GetColor().empty())
-//		{
-//			color = "purple";
-//		}
-//		else
-//		{
-//			color = options.GetColor();
-//		}
-//
-//		stream << "<g transform = \"translate(" << ellParams.x0 << " " << ellParams.y0 << ") rotate(" << (ellParams.theta / 3.141592653589793238463) * 180 << ")\">" << std::endl
-//			<< "<ellipse cx=\"0\" cy=\"0\" rx=\"" << ellParams.a << "\" ry=\"" << ellParams.b << "\" fill=\"none\" stroke=\"" << color << "\" stroke-width=\"1\" />" << std::endl;
-//		if (options.GetDrawLineMajorAxis() == true)
-//		{
-//			stream << "<line x1=\"" << -ellParams.a << "\" y1=\"0\" x2=\"" << ellParams.a << "\" y2=\"0\" stroke-width=\"2\" stroke=\"purple\" />" << std::endl;
-//		}
-//
-//		if (options.GetDrawLineMinorAxis() == true)
-//		{
-//			stream << "<line x1=\"0\" y1=\"" << -ellParams.b << "\" x2=\"0\" y2=\"" << ellParams.b << "\" stroke-width=\"2\" stroke=\"DarkGoldenRod\" />" << std::endl;
-//		}
-//
-//		stream << "</g>" << std::endl;
-//	}
-//}
+void CResultAsHtmlOutput::GenerateEllipsesSvg(std::ostream& stream)
+{
+	if (!this->getEllipse)
+	{
+		return;
+	}
+
+	for (int i = 0;; ++i)
+	{
+		std::string color;
+		EllipseOptions options;
+		EllipseParams ellParams;
+		if (!this->getEllipse(i, ellParams, options))
+		{
+			break;
+		}
+
+		if (options.GetColor().empty())
+		{
+			color = "purple";
+		}
+		else
+		{
+			color = options.GetColor();
+		}
+
+		stream << "<g transform = \"translate(" << ellParams.x0 << " " << ellParams.y0 << ") rotate(" << (ellParams.theta / 3.141592653589793238463) * 180 << ")\">" << std::endl
+			<< "<ellipse cx=\"0\" cy=\"0\" rx=\"" << ellParams.a << "\" ry=\"" << ellParams.b << "\" fill=\"none\" stroke=\"" << color << "\" stroke-width=\"1\" />" << std::endl;
+		if (options.GetDrawLineMajorAxis() == true)
+		{
+			stream << "<line x1=\"" << -ellParams.a << "\" y1=\"0\" x2=\"" << ellParams.a << "\" y2=\"0\" stroke-width=\"2\" stroke=\"purple\" />" << std::endl;
+		}
+
+		if (options.GetDrawLineMinorAxis() == true)
+		{
+			stream << "<line x1=\"0\" y1=\"" << -ellParams.b << "\" x2=\"0\" y2=\"" << ellParams.b << "\" stroke-width=\"2\" stroke=\"DarkGoldenRod\" />" << std::endl;
+		}
+
+		stream << "</g>" << std::endl;
+	}
+}
 
 std::string CResultAsHtmlOutput::GeneratePointsSvg()
 {
@@ -351,20 +378,35 @@ void CResultAsHtmlOutput::GenerateLinesSvg(std::ostream& stream)
 	stream << "<!-- BEGIN LINES -->" << std::endl;
 	const float LineWidth = 1;
 
+	Attributes attribs;
+
 	for (int i = 0;; ++i)
 	{
-		float x0, y0, x1, y1; std::string strColor;
-		if (!this->getLine(i, x0, y0, x1, y1, strColor))
+		LineData ld;
+		attribs.Clear();
+		if (!this->getLine(i, ld, attribs))
 		{
 			break;
 		}
-
-		if (strColor.empty())
+		//float x0, y0, x1, y1; std::string strColor;
+		/*if (!this->getLine(i, x0, y0, x1, y1, strColor))
 		{
-			strColor = "red";
+			break;
+		}*/
+
+		if (attribs.color.empty())
+		{
+			attribs.color = "red";
 		}
 
-		stream << "<line x1=\"" << x0 << "\" y1=\"" << y0 << "\" x2=\"" << x1 << "\" y2=\"" << y1 << "\" stroke-width=\"" << LineWidth << "\" stroke=\"" << strColor << "\"/>" << std::endl;
+		stream << "<line x1=\"" << ld.x0 << "\" y1=\"" << ld.y0 << "\" x2=\"" << ld.x1 << "\" y2=\"" << ld.y1 << "\" stroke-width=\"" << LineWidth << "\" stroke=\"" << attribs.color << "\"";
+
+		if (!attribs.className.empty())
+		{
+			stream << " class=\"" << attribs.className << "\"";
+		}
+
+		stream << "/>" << std::endl;
 	}
 
 	stream << "<!-- END LINES -->" << std::endl;

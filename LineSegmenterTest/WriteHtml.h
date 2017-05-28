@@ -3,6 +3,7 @@
 #include <functional>
 //#include "lsd.h"
 //#include "EllipseFit.h"
+#include "inc_EllipseUtils.h"
 
 class CResultAsHtmlOutput
 {
@@ -23,13 +24,48 @@ public:
 		void SetDrawLineMajorAxis(bool b) { this->drawLineMajorAxis = b; }
 		void SetDrawLineMinorAxis(bool b) { this->drawLineMinorAxis = b; }
 	};
+
+	struct Attributes
+	{
+		std::string className;
+		std::string idText;
+		std::string color;
+
+		void Clear() { this->className.clear(); this->idText.clear(); this->color.clear(); }
+	};
+
+	struct LineData
+	{
+		float x0; 
+		float y0; 
+		float x1; 
+		float y1;
+	};
+
+	struct SegmentData
+	{
+		float x0;
+		float y0;
+		float x1;
+		float y1;
+		float width;
+
+		void SetDefault()
+		{
+			this->width = 1;
+		}
+	};
+
+
+	typedef EllipseUtils::EllipseParameters<float> EllipseParams;
 private:
 	static const char* szHTML;
 
-	std::function<bool(int, float& x1,float& y1,float& x2,float& y2, float& width,std::string& color)> getSegments;
+	std::function<bool(int, SegmentData&, Attributes& )> getSegments;
 	//std::function<bool(int, EllipseParameters&, EllipseOptions&)> getEllipse;
+	std::function<bool(int, EllipseParams&, CResultAsHtmlOutput::EllipseOptions&)> getEllipse;
 	std::function<bool(int, float& x, float&y, std::string& color)> getPoint;
-	std::function<bool(int, float& x0, float&y0, float& x1, float&y1, std::string& color)> getLine;
+	std::function<bool(int, LineData& lineData, Attributes& attribs)> getLine;
 	std::function<bool(int, float& x, float& y)> getPolygonPoints;
 	std::wstring filenameImage;
 	int widthsvg, heightsvg;
@@ -46,10 +82,13 @@ public:
 	void SetWidthHeight(int width, int height) { this->SetWidthHeightSvg(width, height); this->SetWidthHeightImage(width, height); }
 	void SetWidthHeightSvg(int width, int height) { this->widthsvg = width; this->heightsvg = height; }
 	void SetWidthHeightImage(int width, int height) { this->widthImage = width; this->heightImage = height; }
-	void SetGetSegments(std::function<bool(int, float& x1, float& y1, float& x2, float& y2, float& width, std::string&)> getSegments) { this->getSegments = getSegments; }
+	//void SetGetSegments(std::function<bool(int, float& x1, float& y1, float& x2, float& y2, float& width, std::string&)> getSegments) { this->getSegments = getSegments; }
+	void SetGetSegments(std::function<bool(int, SegmentData&, Attributes& )> getSegments) { this->getSegments = getSegments; }
 	//void SetGetEllipses(std::function<bool(int, EllipseParameters&, EllipseOptions& option)> getEllipse) { this->getEllipse = getEllipse; }
+	void SetGetEllipses(std::function<bool(int, EllipseParams&, EllipseOptions& option)> getEllipse) { this->getEllipse = getEllipse; }
 	void SetGetPoints(std::function<bool(int, float& x, float&y, std::string& color)> getPoint) { this->getPoint = getPoint; }
-	void SetGetLines(std::function<bool(int, float& x0, float&y0, float& x1, float&y1, std::string& color)> getLine) { this->getLine = getLine; }
+	//void SetGetLines(std::function<bool(int, float& x0, float&y0, float& x1, float&y1, std::string& color)> getLine) { this->getLine = getLine; }
+	void SetGetLines(std::function<bool(int, LineData& lineData, Attributes& attribs)> getLine) { this->getLine = getLine; }
 	void SetGetPolygonPoints(std::function<bool(int, float& x, float& y)> getPolygonPoints) { this->getPolygonPoints = getPolygonPoints; }
 	void SetImageTransformationMatrix(float a, float b, float c, float d, float e, float f) { this->a = a; this->b = b; this->c = c; this->d = d; this->e = e; this->f = f; }
 
@@ -62,12 +101,12 @@ private:
 	void WriteUTF16(const wchar_t* str);
 
 	std::string GenerateSegmentsSvg();
-	//std::string GenerateEllipsesSvg();
+	std::string GenerateEllipsesSvg();
 	std::string GeneratePointsSvg();
 	std::string GenerateLinesSvg();
 	std::string GeneratePolygonSvg();
 	void GenerateSegmentsSvg(std::ostream& stream);
-	//void GenerateEllipsesSvg(std::ostream& stream);
+	void GenerateEllipsesSvg(std::ostream& stream);
 	void GeneratePointsSvg(std::ostream& stream);
 	void GenerateLinesSvg(std::ostream& stream);
 	void GeneratePolygonSvg(std::ostream& stream);

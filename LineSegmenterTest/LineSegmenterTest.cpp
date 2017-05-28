@@ -795,12 +795,27 @@ int main(int argc, char * argv[])
 		htmlOutput.SetImageUrl(s2ws(options.GetSourceFilename()).c_str());
 
 		CChainFuncs chain;
+		const std::vector<cv::Vec4f>& allLines = ad.GetLines();
+		chain.AddFunc(
+			[&allLines](int totalIdx, int idx, CResultAsHtmlOutput::SegmentData& segmentData, CResultAsHtmlOutput::Attributes& attribs)->bool
+		{
+			if (idx >= allLines.size())
+				return false;
+
+			segmentData.x0 = allLines[idx].val[0];
+			segmentData.y0 = allLines[idx].val[1];
+			segmentData.x1 = allLines[idx].val[2];
+			segmentData.y1 = allLines[idx].val[3];
+			segmentData.width = 1;
+			attribs.className = "allsegments";
+			return true;
+		});
 		for (int i = 0; i < ad.GetRefinedLines().size(); ++i)
 		{
 			chain.AddFunc(
-				[i, &ad](int totalIdx, int idx, float& x1, float& y1, float& x2, float& y2, float& width, std::string& color)->bool
+				[i, &ad](int totalIdx, int idx, CResultAsHtmlOutput::SegmentData& segmentData, CResultAsHtmlOutput::Attributes& attribs)->bool
 			{
-				auto refinedLines = ad.GetRefinedLines()[i];
+				const ArchImgProc::CHoughLineRefiner<float, cv::Vec4f>&  refinedLines = ad.GetRefinedLines()[i];
 				CHoughLineRefiner<float, Vec4f>::ResultLineSegment lsResult;
 				bool b = refinedLines.GetResultLineSegment(idx, &lsResult);
 				if (b == false)
@@ -808,14 +823,15 @@ int main(int argc, char * argv[])
 					return false;
 				}
 
-				x1 = lsResult.p1.x; x2 = lsResult.p2.x;
-				y1 = lsResult.p1.y; y2 = lsResult.p2.y;
-				width = 3;
-				color = "red";
+				segmentData.x0 = lsResult.p1.x; segmentData.x1 = lsResult.p2.x;
+				segmentData.y0 = lsResult.p1.y; segmentData.y1 = lsResult.p2.y;
+				segmentData.width = 3;
+				attribs.color = "red";
+				return true;
 			});
 		}
 
-		htmlOutput.SetGetSegments(std::bind(&CChainFuncs::Func, chain, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+		htmlOutput.SetGetSegments(std::bind(&CChainFuncs::Func, chain, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 		//htmlOutput.SetGetSegments( [&](int idx, float& x1, float& y1, float& x2, float& y2, float& width, std::string&)->bool
 		//{
 		//	auto vec = ad.GetRefinedLines();
