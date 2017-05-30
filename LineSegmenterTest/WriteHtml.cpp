@@ -20,7 +20,7 @@ R"literal(<!DOCTYPE html>
 <meta charset="UTF-8">
 <body>
 
-<svg width="%[widthSvg]px" height="%[heightSvg]px" version="1.1" 	xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg id="svgdisp" width="%[widthSvg]px" height="%[heightSvg]px" version="1.1" 	xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <defs>
 	<filter id = "f1">
 	<!-- <feColorMatrix type = "matrix" values = "1 0 0 0 , 0 1 0 0 0, 0 0 1 0 0.0, 0 0 0 1 0" /> -->
@@ -102,11 +102,14 @@ R"literal(<!DOCTYPE html>
 %[customtext]
 
 <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.1/dist/svg-pan-zoom.min.js"></script>
 <script type = "text/javascript">
 window.onload = function() {
 	var s = document.getElementById("imageSaturation").getAttribute("values");
 	var f = parseFloat(s) * 100;
 	document.getElementById("saturationSlider").setAttribute("value", f);
+
+	var panZoomTiger = svgPanZoom('#svgdisp',{controlIconsEnabled:true});
 }
 
 function setImageSaturationValue(newValue)
