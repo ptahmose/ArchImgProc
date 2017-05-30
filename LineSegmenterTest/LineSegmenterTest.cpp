@@ -818,7 +818,7 @@ int main(int argc, char * argv[])
 			strStr << "origlineseg" << i;
 			auto className = strStr.str();
 			chain.AddFunc(
-				[i, &allLines, &ad,className](int totalIdx, int idx, CResultAsHtmlOutput::SegmentData& segmentData, CResultAsHtmlOutput::Attributes& attribs)->bool
+				[i, &allLines, &ad, className](int totalIdx, int idx, CResultAsHtmlOutput::SegmentData& segmentData, CResultAsHtmlOutput::Attributes& attribs)->bool
 			{
 				const ArchImgProc::CHoughLineRefiner<float, cv::Vec4f>&  refinedLines = ad.GetRefinedLines()[i];
 				CHoughLineRefiner<float, Vec4f>::OriginalLineSegment origLs;
@@ -839,12 +839,12 @@ int main(int argc, char * argv[])
 			strStr.str("");
 			strStr << "Original LineSegments (" << i << ")";
 			htmlOutput.AddShowHideModifierForClass(strStr.str(), className);
-		};
 
-		for (int i = 0; i < ad.GetRefinedLines().size(); ++i)
-		{
+			strStr.str("");
+			strStr << "refinedls" << i;
+			className = strStr.str();
 			chain.AddFunc(
-				[i, &ad](int totalIdx, int idx, CResultAsHtmlOutput::SegmentData& segmentData, CResultAsHtmlOutput::Attributes& attribs)->bool
+				[i, &ad, className](int totalIdx, int idx, CResultAsHtmlOutput::SegmentData& segmentData, CResultAsHtmlOutput::Attributes& attribs)->bool
 			{
 				const ArchImgProc::CHoughLineRefiner<float, cv::Vec4f>&  refinedLines = ad.GetRefinedLines()[i];
 				CHoughLineRefiner<float, Vec4f>::ResultLineSegment lsResult;
@@ -858,9 +858,14 @@ int main(int argc, char * argv[])
 				segmentData.y0 = lsResult.p1.y; segmentData.y1 = lsResult.p2.y;
 				segmentData.width = 3;
 				attribs.color = "red";
+				attribs.className = className;
 				return true;
 			});
-		}
+
+			strStr.str("");
+			strStr << "Refined LineSegments (" << i << ")";
+			htmlOutput.AddShowHideModifierForClass(strStr.str(), className);
+		};
 
 		htmlOutput.SetGetSegments(std::bind(&CChainFuncs::Func, chain, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 		//htmlOutput.SetGetSegments( [&](int idx, float& x1, float& y1, float& x2, float& y2, float& width, std::string&)->bool

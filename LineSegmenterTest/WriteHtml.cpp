@@ -17,6 +17,7 @@ static std::wstring s2ws(const std::string& str)
 /*static*/const char* CResultAsHtmlOutput::szHTML =
 R"literal(<!DOCTYPE html>
 <html>
+<meta charset="UTF-8">
 <body>
 
 <svg width="%[widthSvg]px" height="%[heightSvg]px" version="1.1" 	xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -45,10 +46,16 @@ R"literal(<!DOCTYPE html>
 </svg>
 
 <style>
-    table, th, td {
+	.table1 {
         border: 1px solid black;
     }
-    input {
+	.table1th {
+        border: 1px solid black;
+    }
+	.table1td {
+        border: 1px solid black;
+    }
+    .inputautosize {
         width: calc(100% - 12px); /* IE 9,10 , Chrome, Firefox */
         width: -webkit-calc(100% - 12px); /*For safari 6.0*/
     }
@@ -57,33 +64,39 @@ R"literal(<!DOCTYPE html>
         border-style:solid;
         border-color:#287EC7;
     } 
+
+	%[modifystyles]
 </style>
 
-<table>
+<table class="table1">
   <tr>
-	<th>Image Filter </th>
-	<th style="width:450px">Value</th>
+	<th class="table1th">Image Filter </th>
+	<th class="table1th" style="width:450px">Value</th>
   </tr>
   <tr>
-	<td>Saturation</td>
-	<td><input id="saturationSlider" type="range"  min="0" max="100" onchange="setImageSaturationValue(this.value)" oninput="setImageSaturationValue(this.value)"/></td>
+	<td class="table1td">Saturation</td>
+	<td class="table1td"><input id="saturationSlider" class="inputautosize" type="range"  min="0" max="100" onchange="setImageSaturationValue(this.value)" oninput="setImageSaturationValue(this.value)"/></td>
   </tr>
   <tr>
-	<td>Transparency</td>
-	<td><input id="transparencySlider" type="range"  min="0" max="100" value="100" onchange="setImageTransparencyValue(this.value)" oninput="setImageTransparencyValue(this.value)"/></td>
+	<td class="table1td">Transparency</td>
+	<td class="table1td"><input id="transparencySlider" class="inputautosize" type="range"  min="0" max="100" value="100" onchange="setImageTransparencyValue(this.value)" oninput="setImageTransparencyValue(this.value)"/></td>
   </tr>
 </table>
 
-<table>
+<table class="table1">
   <tr>
-	<th>Change Display </th>
-	<th style="width:450px">Value</th>
+	<th class="table1th">Change Display </th>
+	<th class="table1th" style="width:450px">
+	<table>
+		<tr class="table1td" >
+			<td style="width:250px;text-align:center">Value</td>
+			<td><input type="button" value="Select all" onclick="selectDeselectAll(true)"></td>
+			<td><input type="button" value="Unselect all" onclick="selectDeselectAll(false)"></td>
+		</tr>
+	</table>
+    </th>
   </tr>
   %[modifier]
-  <tr>
-	<td>Show all line-segments</td>
-	<td><input id="showAllLineSegmentsCheckbox" type="checkbox" checked="true" onchange="setShowAllLineSegments(this.checked)" /></td>
-  </tr>
 </table>
 
 %[customtext]
@@ -107,6 +120,11 @@ function setImageTransparencyValue(newValue)
 	var f = newValue / 100.0;
 	var s = "1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 " + f.toString() + " 0";
 	document.getElementById("imageColorMatrix").setAttribute("values", s);
+}
+
+function selectDeselectAll(b)
+{
+	$("input:checkbox.showhidecheckbox").prop('checked',b).trigger('change');
 }
 
 %[modifierHandlers]
@@ -235,8 +253,8 @@ void CResultAsHtmlOutput::Generate()
 				for (auto i : this->hideShowModifierInfo)
 				{
 					s << L"<tr>" << std::endl <<
-						L"<td>" << i.text.c_str() << "</td>" << std::endl <<
-						L"<td><input type=\"checkbox\" checked=\"true\" onchange=\"handlerFunc" << i.className.c_str() << L"(this.checked)\"/></td>" << std::endl <<
+						L"<td class=\"table1td\">" << i.text.c_str() << "</td>" << std::endl <<
+						L"<td class=\"table1td\"><input type=\"checkbox\" checked=\"checked\" class=\"showhidecheckbox\" onchange=\"handlerFunc" << i.className.c_str() << L"(this.checked)\"/></td>" << std::endl <<
 						L"</tr>" << std::endl;
 				}
 
@@ -250,6 +268,18 @@ void CResultAsHtmlOutput::Generate()
 					s << L"function " << "handlerFunc" << i.className.c_str() << L"(newValue)" << std::endl <<
 						L"{" << std::endl <<
 						L"$('." << i.className.c_str() << "').css({\"display\":newValue?\"\":\"none\"});" << std::endl <<
+						L"}" << std::endl;
+				}
+
+				return s.str();
+			}
+			else if (strcmp(szKey, "modifystyles") == 0)
+			{
+				std::wostringstream s;
+				for (auto i : this->hideShowModifierInfo)
+				{
+					s << L". " <<  i.className.c_str() << L" {" << std::endl <<
+						L"display:" << std::endl <<
 						L"}" << std::endl;
 				}
 
