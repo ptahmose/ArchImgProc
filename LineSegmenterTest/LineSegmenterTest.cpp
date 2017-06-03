@@ -785,14 +785,14 @@ int main(int argc, char * argv[])
 			++i;
 		}
 
-		wstringstream htmlFilename;
-		htmlFilename << options.GetOutputFolder().c_str() << options.GetOutputFilenamePrefix().c_str() << i << LR"(.html)";
+		stringstream htmlFilename;
+		htmlFilename << options.GetOutputFolder().c_str() << options.GetOutputFilenamePrefix().c_str() << i << R"(.html)";
 		CResultAsHtmlOutput htmlOutput(htmlFilename.str());
-		htmlOutput.SetImageUrl(s2ws(options.GetSourceFilename()).c_str());
+		htmlOutput.SetImageUrl(options.GetSourceFilename().c_str());
 		htmlOutput.SetWidthHeight(ad.GetBitmapWidth(), ad.GetBitmapHeight());
 		htmlOutput.SetWidthHeightImage(ad.GetBitmapWidth(), ad.GetBitmapHeight());
 		htmlOutput.SetWidthHeightSvg(ad.GetBitmapWidth(), ad.GetBitmapHeight());
-		htmlOutput.SetImageUrl(s2ws(options.GetSourceFilename()).c_str());
+		htmlOutput.SetImageUrl(options.GetSourceFilename().c_str());
 
 		CChainFuncs chain;
 		const std::vector<cv::Vec4f>& allLines = ad.GetLines();
@@ -808,6 +808,10 @@ int main(int argc, char * argv[])
 			segmentData.y1 = allLines[idx].val[3];
 			segmentData.width = 1;
 			attribs.className = "allsegments";
+
+			std::stringstream ss;
+			ss << "#" << idx;
+			attribs.tooltipText = ss.str();
 			return true;
 		});
 		htmlOutput.AddShowHideModifierForClass("Show all line-segments", "allsegments");

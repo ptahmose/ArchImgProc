@@ -30,8 +30,9 @@ public:
 		std::string className;
 		std::string idText;
 		std::string color;
+		std::string tooltipText;
 
-		void Clear() { this->className.clear(); this->idText.clear(); this->color.clear(); }
+		void Clear() { this->className.clear(); this->idText.clear(); this->color.clear(); this->tooltipText.clear(); }
 	};
 
 	struct LineData
@@ -73,18 +74,18 @@ private:
 	std::function<bool(int, LineData& lineData, Attributes& attribs)> getLine;
 	std::function<bool(int, float& x, float& y)> getPolygonPoints;
 	std::vector<HideShowModifierInfo> hideShowModifierInfo;
-	std::wstring filenameImage;
+	std::string filenameImage;
 	int widthsvg, heightsvg;
 	int widthImage, heightImage;
 	FILE* fp;
-	std::wstring customText;
+	std::string customText;
 	float a, b, c, d, e, f;
 public:
-	CResultAsHtmlOutput(const wchar_t* filename);
-	CResultAsHtmlOutput(const std::wstring& filename) : CResultAsHtmlOutput(filename.c_str()) {}
+	CResultAsHtmlOutput(const char* filename);
+	CResultAsHtmlOutput(const std::string& filename) : CResultAsHtmlOutput(filename.c_str()) {}
 	~CResultAsHtmlOutput();
 
-	void SetImageUrl(const wchar_t* szFilename) { this->filenameImage = szFilename; }
+	void SetImageUrl(const char* szFilename) { this->filenameImage = szFilename; }
 	void SetWidthHeight(int width, int height) { this->SetWidthHeightSvg(width, height); this->SetWidthHeightImage(width, height); }
 	void SetWidthHeightSvg(int width, int height) { this->widthsvg = width; this->heightsvg = height; }
 	void SetWidthHeightImage(int width, int height) { this->widthImage = width; this->heightImage = height; }
@@ -96,7 +97,7 @@ public:
 	void SetImageTransformationMatrix(float a, float b, float c, float d, float e, float f) { this->a = a; this->b = b; this->c = c; this->d = d; this->e = e; this->f = f; }
 
 	void AddCustomTextLine(const char* sz);
-	void AddCustomTextLine(const wchar_t* sz);
+//	void AddCustomTextLine(const wchar_t* sz);
 
 	void AddShowHideModifierForClass(const char* text, const char* className) { this->hideShowModifierInfo.push_back(HideShowModifierInfo{ text, className }); }
 	void AddShowHideModifierForClass(const std::string& text, const std::string& className) { this->hideShowModifierInfo.push_back(HideShowModifierInfo{ text, className }); }
@@ -104,7 +105,7 @@ public:
 	void Generate();
 
 private:
-	void WriteUTF16(const wchar_t* str);
+	void WriteUTF8(const std::string& str);
 
 	std::string GenerateSegmentsSvg();
 	std::string GenerateEllipsesSvg();
@@ -117,7 +118,8 @@ private:
 	void GenerateLinesSvg(std::ostream& stream);
 	void GeneratePolygonSvg(std::ostream& stream);
 
-	std::wstring  Process(const std::string& str, std::function<std::wstring(const char*)> getReplacement);
+	std::string  Process(const std::string& str, std::function<std::string(const char*)> getReplacement);
 
 	static std::wstring AddLineBreaks(std::wstring& str);
+	static std::string AddLineBreaks(std::string& str);
 };

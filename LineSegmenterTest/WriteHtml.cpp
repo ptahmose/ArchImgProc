@@ -8,16 +8,36 @@
 
 static std::wstring s2ws(const std::string& str)
 {
-	typedef std::codecvt_utf8<wchar_t> convert_typeX;
-	std::wstring_convert<convert_typeX, wchar_t> converterX;
 
-	return converterX.from_bytes(str);
+
+	//return std::wstring(L"ABCDEFG");
+	/*std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> ucs2conv;
+	std::wstring ucs2 = ucs2conv.from_bytes(str.c_str());
+	//std::string utf8_new = ucs2conv.to_bytes(ucs2);
+	return ucs2;*/
+	/*
+		typedef std::codecvt_utf8<wchar_t> convert_typeX;
+		std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+		return converterX.from_bytes(str);*/
 }
+
+/*
+ */
 
 /*static*/const char* CResultAsHtmlOutput::szHTML =
 R"literal(<!DOCTYPE html>
 <html>
 <meta charset="UTF-8">
+<head>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/jquery.tooltipster/4.2.2/css/tooltipster.bundle.min.css"/>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/louisameline/tooltipster-follower/dist/css/tooltipster-follower.min.css"/>
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.1/dist/svg-pan-zoom.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/jquery.tooltipster/4.2.2/js/tooltipster.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/louisameline/tooltipster-follower/dist/js/tooltipster-follower.min.js"></script>
+</head>
+
 <body>
 
 <svg id="svgdisp" width="%[widthSvg]px" height="%[heightSvg]px" version="1.1" 	xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -101,8 +121,6 @@ R"literal(<!DOCTYPE html>
 
 %[customtext]
 
-<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.1/dist/svg-pan-zoom.min.js"></script>
 <script type = "text/javascript">
 window.onload = function() {
 	var s = document.getElementById("imageSaturation").getAttribute("values");
@@ -110,6 +128,14 @@ window.onload = function() {
 	document.getElementById("saturationSlider").setAttribute("value", f);
 
 	var panZoomTiger = svgPanZoom('#svgdisp',{controlIconsEnabled:true});
+
+	$(document).ready(function() {
+		$('.tooltip').tooltipster({
+		theme: 'tooltipster-punk',
+		contentAsHTML: true,
+		plugins: ['follower']
+		});
+	});
 }
 
 function setImageSaturationValue(newValue)
@@ -137,10 +163,10 @@ function selectDeselectAll(b)
 </body>
 </html> )literal";
 
-CResultAsHtmlOutput::CResultAsHtmlOutput(const wchar_t* filename)
+CResultAsHtmlOutput::CResultAsHtmlOutput(const char* filename)
 {
 	this->a = this->b = this->c = this->d = this->e = this->f = std::numeric_limits<float>::quiet_NaN();
-	_wfopen_s(&this->fp, filename, L"wb");
+	fopen_s(&this->fp, filename, "wb");
 	/*std::wstring_convert<std::codecvt_utf16<wchar_t>> conv;
 	this->filenameImage = conv.from_bytes(reinterpret_cast<const char*>(filename));*/
 }
@@ -152,13 +178,8 @@ CResultAsHtmlOutput::~CResultAsHtmlOutput()
 
 void CResultAsHtmlOutput::AddCustomTextLine(const char* sz)
 {
-	this->AddCustomTextLine(s2ws(sz).c_str());
-}
-
-void CResultAsHtmlOutput::AddCustomTextLine(const wchar_t* sz)
-{
 	this->customText += sz;
-	this->customText += L'\n';
+	this->customText += '\n';
 }
 
 void CResultAsHtmlOutput::Generate()
@@ -173,58 +194,58 @@ void CResultAsHtmlOutput::Generate()
 	std::string line;
 	while (std::getline(f, line))
 	{
-		std::wstring l = this->Process(line,
-			[&](const char* szKey) -> std::wstring
+		std::string l = this->Process(line,
+			[&](const char* szKey) -> std::string
 		{
 			if (strcmp(szKey, "beginimage") == 0)
 			{
 				if (this->filenameImage.empty())
-					return std::wstring(L"<!--");
-				return std::wstring();
+					return std::string("<!--");
+				return std::string();
 			}
 			else if (strcmp(szKey, "endimage") == 0)
 			{
 				if (this->filenameImage.empty())
-					return std::wstring(L"-->");
-				return std::wstring();
+					return std::string("-->");
+				return std::string();
 			}
 			else if (strcmp(szKey, "imagefilename") == 0)
 			{
-				std::wstring str(L"file:///");
+				std::string str("file:///");
 				str += this->filenameImage;
 				return str;
 			}
 			else if (strcmp(szKey, "linesegmentssvg") == 0)
 			{
-				return s2ws(strSegments);
+				return strSegments;
 			}
 			else if (strcmp(szKey, "ellipsessvg") == 0)
 			{
-				return s2ws(strEllipses);
+				return strEllipses;
 			}
 			else if (strcmp(szKey, "linessvg") == 0)
 			{
-				return s2ws(strLines);
+				return strLines;
 			}
 			else if (strcmp(szKey, "polygonsvg") == 0)
 			{
-				return s2ws(strPolygon);
+				return strPolygon;
 			}
 			else if (strcmp(szKey, "widthSvg") == 0)
 			{
-				return std::to_wstring(this->widthsvg > 0 ? this->widthsvg : 1456);
+				return std::to_string(this->widthsvg > 0 ? this->widthsvg : 1456);
 			}
 			else if (strcmp(szKey, "heightSvg") == 0)
 			{
-				return std::to_wstring(this->heightsvg > 0 ? this->heightsvg : 2592);
+				return std::to_string(this->heightsvg > 0 ? this->heightsvg : 2592);
 			}
 			else if (strcmp(szKey, "widthImage") == 0)
 			{
-				return std::to_wstring(this->widthImage > 0 ? this->widthImage : 1456);
+				return std::to_string(this->widthImage > 0 ? this->widthImage : 1456);
 			}
 			else if (strcmp(szKey, "heightImage") == 0)
 			{
-				return std::to_wstring(this->heightImage > 0 ? this->heightImage : 2592);
+				return std::to_string(this->heightImage > 0 ? this->heightImage : 2592);
 			}
 			else if (strcmp(szKey, "customtext") == 0)
 			{
@@ -233,66 +254,66 @@ void CResultAsHtmlOutput::Generate()
 					return this->customText;
 				}
 
-				std::wstring s;
-				s = L"<p class=\"bordercustomtext\">\n";
+				std::string s;
+				s = "<p class=\"bordercustomtext\">\n";
 				s += CResultAsHtmlOutput::AddLineBreaks(this->customText);
-				s += L"</p>";
+				s += "</p>";
 				return s;
 			}
 			else if (strcmp(szKey, "imageTransformMatrix") == 0)
 			{
-				if (std::isnan(this->a)) { return std::wstring(); }
-				std::wostringstream s;
-				s << std::endl << L"    transform=\"matrix(" << this->a << L"," << this->b << L"," << this->c << L"," << this->d << L"," << this->e << L"," << this->f << L")\"" << std::endl << L"    ";
+				if (std::isnan(this->a)) { return std::string(); }
+				std::ostringstream s;
+				s << std::endl << "    transform=\"matrix(" << this->a << "," << this->b << "," << this->c << "," << this->d << "," << this->e << "," << this->f << ")\"" << std::endl << "    ";
 				return s.str();
 			}
 			else if (strcmp(szKey, "pointssvg") == 0)
 			{
-				return s2ws(strPoints);
+				return strPoints;
 			}
 			else if (strcmp(szKey, "modifier") == 0)
 			{
-				std::wostringstream s;
+				std::ostringstream s;
 				for (auto i : this->hideShowModifierInfo)
 				{
-					s << L"<tr>" << std::endl <<
-						L"<td class=\"table1td\">" << i.text.c_str() << "</td>" << std::endl <<
-						L"<td class=\"table1td\"><input type=\"checkbox\" checked=\"checked\" class=\"showhidecheckbox\" onchange=\"handlerFunc" << i.className.c_str() << L"(this.checked)\"/></td>" << std::endl <<
-						L"</tr>" << std::endl;
+					s << "<tr>" << std::endl <<
+						"<td class=\"table1td\">" << i.text.c_str() << "</td>" << std::endl <<
+						"<td class=\"table1td\"><input type=\"checkbox\" checked=\"checked\" class=\"showhidecheckbox\" onchange=\"handlerFunc" << i.className.c_str() << "(this.checked)\"/></td>" << std::endl <<
+						"</tr>" << std::endl;
 				}
 
 				return s.str();
 			}
 			else if (strcmp(szKey, "modifierHandlers") == 0)
 			{
-				std::wostringstream s;
+				std::ostringstream s;
 				for (auto i : this->hideShowModifierInfo)
 				{
-					s << L"function " << "handlerFunc" << i.className.c_str() << L"(newValue)" << std::endl <<
-						L"{" << std::endl <<
-						L"$('." << i.className.c_str() << "').css({\"display\":newValue?\"\":\"none\"});" << std::endl <<
-						L"}" << std::endl;
+					s << "function " << "handlerFunc" << i.className.c_str() << "(newValue)" << std::endl <<
+						"{" << std::endl <<
+						"$('." << i.className.c_str() << "').css({\"display\":newValue?\"\":\"none\"});" << std::endl <<
+						"}" << std::endl;
 				}
 
 				return s.str();
 			}
 			else if (strcmp(szKey, "modifystyles") == 0)
 			{
-				std::wostringstream s;
+				std::ostringstream s;
 				for (auto i : this->hideShowModifierInfo)
 				{
-					s << L". " <<  i.className.c_str() << L" {" << std::endl <<
-						L"display:" << std::endl <<
-						L"}" << std::endl;
+					s << ". " << i.className.c_str() << " {" << std::endl <<
+						"display:" << std::endl <<
+						"}" << std::endl;
 				}
 
 				return s.str();
 			}
 
-			return std::wstring(L"XXX");
+			return std::string("XXX");
 		});
 
-		this->WriteUTF16(l.c_str());
+		this->WriteUTF8(l);
 	}
 }
 
@@ -302,10 +323,21 @@ void CResultAsHtmlOutput::Generate()
 	return std::regex_replace(str, rx, L"<br/>");
 }
 
-void CResultAsHtmlOutput::WriteUTF16(const wchar_t* str)
+/*static*/std::string CResultAsHtmlOutput::AddLineBreaks(std::string& str)
 {
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-	auto s = utf8_conv.to_bytes(str);
+	std::regex rx("\n");
+	return std::regex_replace(str, rx, "<br/>");
+}
+
+//void CResultAsHtmlOutput::WriteUTF16(const wchar_t* str)
+//{
+//	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+//	auto s = utf8_conv.to_bytes(str);
+//	fwrite(s.c_str(), 1, s.size(), this->fp);
+//	fputs("\n", this->fp);
+//}
+void CResultAsHtmlOutput::WriteUTF8(const std::string& s)
+{
 	fwrite(s.c_str(), 1, s.size(), this->fp);
 	fputs("\n", this->fp);
 }
@@ -346,9 +378,25 @@ void CResultAsHtmlOutput::GenerateSegmentsSvg(std::ostream& stream)
 
 		stream << "<line x1 = \"" << sd.x0 << "\" y1=\"" << sd.y0 << "\" x2=\"" << sd.x1 << "\" y2=\"" << sd.y1 << "\" "
 			<< "stroke-width=\"" << sd.width << "\" stroke=\"" << attribs.color << "\"";
-		if (!attribs.className.empty())
+
+		bool hasTooltip = false;
+		if (!attribs.tooltipText.empty())
+		{
+			stream << " title=\"" << attribs.tooltipText << "\"";
+			hasTooltip = true;
+		}
+
+		if (!attribs.className.empty() && hasTooltip == true)
+		{
+			stream << " class=\"" << attribs.className << " tooltip" << "\"";
+		}
+		else if (!attribs.className.empty() && hasTooltip == false)
 		{
 			stream << " class=\"" << attribs.className << "\"";
+		}
+		else if (attribs.className.empty() && hasTooltip == true)
+		{
+			stream << " class=\"" << "tooltip" << "\"";
 		}
 
 		stream << "/>" << std::endl;
@@ -463,6 +511,11 @@ void CResultAsHtmlOutput::GenerateLinesSvg(std::ostream& stream)
 			stream << " class=\"" << attribs.className << "\"";
 		}
 
+		if (!attribs.tooltipText.empty())
+		{
+			stream << " title=\"" << attribs.tooltipText << "\"";
+		}
+
 		stream << "/>" << std::endl;
 	}
 
@@ -519,7 +572,7 @@ void CResultAsHtmlOutput::GeneratePointsSvg(std::ostream& stream)
 	stream << "<!-- END POINTS -->" << std::endl;
 }
 
-std::wstring CResultAsHtmlOutput::Process(const std::string& str, std::function<std::wstring(const char*)> getReplacement)
+std::string CResultAsHtmlOutput::Process(const std::string& str, std::function<std::string(const char*)> getReplacement)
 {
 	std::regex regex("%\\[[[:alnum:]]*\\]", std::regex_constants::ECMAScript);
 
@@ -527,22 +580,23 @@ std::wstring CResultAsHtmlOutput::Process(const std::string& str, std::function<
 	auto words_end = std::sregex_iterator{};
 	if (words_begin == words_end)
 	{
-		std::wstring ws = s2ws(str);
-		return ws;
+		return str;
+		/*std::wstring ws = s2ws(str);
+		return ws;*/
 	}
 
-	std::wstring wstr;
+	std::string ostr;
 	int lastPos = 0;
 	for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
 		std::smatch match = *i;
 		int position = i->position();
 		std::string match_str = match.str().substr(2, match.str().size() - 3);
-		wstr += s2ws(str.substr(lastPos, position - lastPos));
-		wstr += getReplacement(match_str.c_str());
+		ostr += str.substr(lastPos, position - lastPos);
+		ostr += getReplacement(match_str.c_str());
 		lastPos = position + match.str().size();
 	}
 
-	wstr += s2ws(str.substr(lastPos, str.size() - lastPos));
+	ostr += str.substr(lastPos, str.size() - lastPos);
 
-	return wstr;
+	return ostr;
 }
