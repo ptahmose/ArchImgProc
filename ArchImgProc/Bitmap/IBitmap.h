@@ -91,6 +91,7 @@ namespace ArchImgProc
 #include "Factory.h"
 #include "BitmapLoader.h"
 #include "BitmapSave.h"
+#include "ColorVisionTransform.h"
 
 namespace ArchImgProc
 {

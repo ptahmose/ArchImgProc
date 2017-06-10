@@ -5,3 +5,5 @@
 #include "Lsd/Lsd.h"
 
 #include "Detection/ArrowDetect.h"
+
+#include "Detection/CoarseEllipseDetector.h"

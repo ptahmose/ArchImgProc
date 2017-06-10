@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineSegmenterTest", "LineSegmenterTest\LineSegmenterTest.vcxproj", "{557A2571-C6DD-4D58-80F3-D2600818F4D9}"
 EndProject
@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bitmap", "Bitmap", "{EFB096
 		ArchImgProc\Bitmap\BitmapData.h = ArchImgProc\Bitmap\BitmapData.h
 		ArchImgProc\Bitmap\BitmapLoader.h = ArchImgProc\Bitmap\BitmapLoader.h
 		ArchImgProc\Bitmap\BitmapSave.h = ArchImgProc\Bitmap\BitmapSave.h
+		ArchImgProc\Bitmap\ColorVisionTransform.h = ArchImgProc\Bitmap\ColorVisionTransform.h
 		ArchImgProc\Bitmap\datastore.h = ArchImgProc\Bitmap\datastore.h
 		ArchImgProc\Bitmap\Factory.h = ArchImgProc\Bitmap\Factory.h
 		ArchImgProc\Bitmap\IBitmap.h = ArchImgProc\Bitmap\IBitmap.h
@@ -34,8 +35,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Detection", "Detection", "{
 	ProjectSection(SolutionItems) = preProject
 		ArchImgProc\Detection\ArrowDetect.h = ArchImgProc\Detection\ArrowDetect.h
 		ArchImgProc\Detection\basictypes.h = ArchImgProc\Detection\basictypes.h
+		ArchImgProc\Detection\CoarseEllipseDetector.h = ArchImgProc\Detection\CoarseEllipseDetector.h
 		ArchImgProc\Detection\csgutils.h = ArchImgProc\Detection\csgutils.h
 		ArchImgProc\Detection\LineSearcher.h = ArchImgProc\Detection\LineSearcher.h
+		ArchImgProc\Detection\morphologyOpenCV.h = ArchImgProc\Detection\morphologyOpenCV.h
 		ArchImgProc\Detection\utils.h = ArchImgProc\Detection\utils.h
 	EndProjectSection
 EndProject

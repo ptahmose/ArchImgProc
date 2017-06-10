@@ -761,12 +761,28 @@ static std::wstring s2ws(const std::string& str)
 	return converterX.from_bytes(str);
 }
 
+static void RunCoarseEllipseDetector(const CCmdlineOptions& options)
+{
+	auto bm = LoadBitmapFromFile(s2ws(options.GetSourceFilename()).c_str());
+	CCoarseEllipseDetector2::ProcessOptions preProcessOptions;
+	CCoarseEllipseDetector2 coarseEllipseDetector2(bm, preProcessOptions);
+	coarseEllipseDetector2.Calculate();
+
+	std::vector<CoarseResult> vecCoarseResult;
+	for (int i = 0; i < coarseEllipseDetector2.GetNumberOfResults(); ++i)
+	{
+		vecCoarseResult.push_back(coarseEllipseDetector2.GetResult(i));;
+	}
+}
+
 int main(int argc, char * argv[])
 {
 	CoInitialize(nullptr);
 
 	CCmdlineOptions options;
 	options.Parse(argv, argc);
+
+	RunCoarseEllipseDetector(options);
 
 	{
 		ArrowDetection ad(ArrowDetection::LoadAndPreprocess(options.GetSourceFilename()));
